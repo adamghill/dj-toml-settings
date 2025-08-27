@@ -6,7 +6,6 @@
 
 ```toml
 # pyproject.toml
-
 [tool.django]
 ALLOWED_HOSTS = [
   "127.0.0.1",
@@ -21,7 +20,6 @@ Use `${SOME_VARIABLE_NAME}` to use an existing setting as a value.
 
 ```toml
 # pyproject.toml
-
 [tool.django]
 GOOD_IPS = ["127.0.0.1"]
 ALLOWED_HOSTS = ${GOOD_IPS}
@@ -33,7 +31,6 @@ ALLOWED_HOSTS = ${GOOD_IPS}
 
 ```toml
 # pyproject.toml
-
 [tool.django]
 ALLOWED_HOSTS = ["127.0.0.1"]
 
@@ -48,7 +45,6 @@ The `[tool.django.envs.{ENVIRONMENT_NAME}]` section of the TOML file will be use
 
 ```toml
 # pyproject.toml
-
 [tool.django]
 ALLOWED_HOSTS = ["127.0.0.1"]
 
@@ -67,7 +63,6 @@ Convert a string to a `Path` object. Handles relative paths based on the TOML fi
 
 ```toml
 # pyproject.toml
-
 [tool.django]
 BASE_DIR = { path = "." }
 PROJECT_DIR = { path = "./your_project_folder" }
@@ -80,7 +75,6 @@ Retrieve variables from the environment by using an `env` key. Specify an option
 
 ```toml
 # pyproject.toml
-
 [tool.django]
 EMAIL_HOST_PASSWORD = { env = 'SECRET_PASSWORD' }
 SECRET_KEY = { env = 'SECRET_KEY', default = 'this-is-a-secret' }
@@ -92,7 +86,6 @@ Add items to an array by using the `insert` key.
 
 ```toml
 # pyproject.toml
-
 [tool.django]
 ALLOWED_HOSTS = { insert = '127.0.0.1' }
 ```
