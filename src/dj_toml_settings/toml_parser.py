@@ -67,7 +67,7 @@ def get_data(path: Path) -> dict:
     except toml.TomlDecodeError:
         logger.error(f"Cannot parse TOML at: {path}")
 
-    return data.get("tool", {}).get("django", {})
+    return data.get("tool", {}).get("django", {}) or {}
 
 
 @typechecked
