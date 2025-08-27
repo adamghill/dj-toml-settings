@@ -2,7 +2,7 @@
 
 > Load Django settings from a TOML file
 
-`dj-toml-settings` reads settings from a TOML file. By default, both `pyproject.toml` and `django.toml` files are parsed for settings under the `[tool.django]` section.
+`dj-toml-settings` reads settings from a TOML file. By default, both `pyproject.toml` and `django.toml` files are parsed for settings in the `[tool.django]` namespace.
 
 ```toml
 # pyproject.toml
@@ -15,9 +15,9 @@ ALLOWED_HOSTS = [
 
 ## Features
 
-### Variable substitution
+### Variables
 
-Use `${SOME_VARIABLE_NAME}` to use an existing variable as a value.
+Use `${SOME_VARIABLE_NAME}` to use an existing setting as a value.
 
 ```toml
 # pyproject.toml
@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ${GOOD_IPS}
 
 ### Apps
 
-`[tool.django.apps.{ANY_NAME_HERE}]` sections of the TOML file can be used to group settings together. They will override any settings in `[tool.django]`.
+`[tool.django.apps.{ANY_NAME_HERE}]` sections of the TOML file can be used to group settings together. They can be named anything. They will override any settings in `[tool.django]`.
 
 ```toml
 # pyproject.toml
@@ -140,6 +140,28 @@ wsgi = initialize(**get_toml_settings(base_dir=base_dir))
 if __name__ == "__main__":
     execute_from_command_line()
 
+...
+```
+
+## Precedence
+
+This is the order that files and sections are parsed (by default). The later sections override the previous settings.
+
+1. `pyproject.toml` -> `[tool.django]`
+2. `pyproject.toml` -> `[tool.django.apps.*]`
+3. `pyproject.toml` -> `[tool.django.envs.*]` that match `ENVIRONMENT` environment variable
+4. `django.toml` -> `[tool.django]`
+5. `django.toml` -> `[tool.django.apps.*]`
+6. `django.toml` -> `[tool.django.envs.*]` that match `ENVIRONMENT` environment variable
+
+## Specify a TOML file
+
+```python
+from pathlib import Path
+from dj_toml_settings import get_toml_settings
+
+base_dir = Path(__file__).resolve().parent
+toml_settings = get_toml_settings(base_dir=base_dir, toml_settings_files=["custom-settings.toml"])
 ...
 ```
 
