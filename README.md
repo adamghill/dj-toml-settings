@@ -44,7 +44,7 @@ TAILWIND_CLI_SRC_CSS = ".django_tailwind_cli/source.css"
 
 ### Environments
 
-The `[tool.django.envs.{ENVIRONMENT_NAME}]` section of the TOML file will used when `{ENVIRONMENT_NAME}` is set to the `ENVIRONMENT` environment variable. For example, `ENVIRONMENT=production python manage.py runserver` will load all settings in the `[tool.django.envs.production]` section. There settings will override any settings in `[tool.django.apps.*]` or `[tool.django]`.
+The `[tool.django.envs.{ENVIRONMENT_NAME}]` section of the TOML file will be used when `{ENVIRONMENT_NAME}` is set to the `ENVIRONMENT` environment variable. For example, `ENVIRONMENT=production python manage.py runserver` will load all settings in the `[tool.django.envs.production]` section. There settings will override any settings in `[tool.django.apps.*]` or `[tool.django]`.
 
 ```toml
 # pyproject.toml
@@ -62,6 +62,8 @@ ALLOWED_HOSTS = ["example.com"]
 ## Special operations
 
 ### Path
+
+Convert a string to a `Path` object. Handles relative paths based on the TOML file.
 
 ```toml
 # pyproject.toml
@@ -95,6 +97,21 @@ Add items to an array by using the `insert` key.
 ALLOWED_HOSTS = { insert = '127.0.0.1' }
 ```
 
+## Integration with Django
+
+This will override any variables defined in `settings.py` with settings from the TOML files.
+
+```python
+# settings.py
+from pathlib import Path
+from dj_toml_settings import configure_toml_settings
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+...
+
+configure_toml_settings(base_dir=BASE_DIR, data=globals())
+```
+
 ## Integration with [nanodjango](https://nanodjango.readthedocs.io)
 
 ```python
@@ -124,21 +141,6 @@ if __name__ == "__main__":
     execute_from_command_line()
 
 ...
-```
-
-## Integration with Django
-
-This will override any variables defined in `settings.py` with settings from the TOML files.
-
-```python
-# settings.py
-from pathlib import Path
-from dj_toml_settings import configure_toml_settings
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-...
-
-configure_toml_settings(base_dir=BASE_DIR, data=globals())
 ```
 
 ## Test
