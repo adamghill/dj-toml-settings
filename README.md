@@ -1,4 +1,4 @@
-# dj-toml-settings
+# dj-toml-settings ⚙️
 
 > Load Django settings from a TOML file
 
@@ -12,7 +12,7 @@ ALLOWED_HOSTS = [
 ]
 ```
 
-## Features
+## Features 🤩
 
 ### Variables
 
@@ -55,7 +55,7 @@ ALLOWED_HOSTS = ["example.localhost"]
 ALLOWED_HOSTS = ["example.com"]
 ```
 
-## Special operations
+## Special operations 😎
 
 ### Path
 
@@ -90,7 +90,9 @@ Add items to an array by using the `insert` key.
 ALLOWED_HOSTS = { insert = '127.0.0.1' }
 ```
 
-## Integration with Django
+## Example Integrations 💚
+
+### Django
 
 This will override any variables defined in `settings.py` with settings from the TOML files.
 
@@ -105,7 +107,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 configure_toml_settings(base_dir=BASE_DIR, data=globals())
 ```
 
-## Integration with [nanodjango](https://nanodjango.readthedocs.io)
+### [nanodjango](https://nanodjango.readthedocs.io) 
 
 ```python
 # app.py
@@ -118,7 +120,7 @@ app = Django(**get_toml_settings(base_dir=base_dir))
 ...
 ```
 
-## Integration with [coltrane](https://coltrane.adamghill.com)
+### [coltrane](https://coltrane.adamghill.com)
 
 ```python
 # app.py
@@ -136,7 +138,7 @@ if __name__ == "__main__":
 ...
 ```
 
-## Precedence
+## Precedence 🔻
 
 This is the order that files and sections are parsed (by default). The later sections override the previous settings.
 
@@ -147,7 +149,7 @@ This is the order that files and sections are parsed (by default). The later sec
 5. `django.toml` -> `[tool.django.apps.*]`
 6. `django.toml` -> `[tool.django.envs.*]` that match `ENVIRONMENT` environment variable
 
-## Specify a TOML file
+## Specify a TOML file 🤓
 
 ```python
 from pathlib import Path
@@ -158,12 +160,12 @@ toml_settings = get_toml_settings(base_dir=base_dir, toml_settings_files=["custo
 ...
 ```
 
-## Test
+## Test 🧪
 
 - `uv install pip install -e .[dev]`
 - `just test`
 
-## Inspiration
+## Inspiration 😍
 
 - [django-pyproject](https://github.com/Ceterai/django-pyproject)
 - [django-settings-toml](https://github.com/maxking/django-settings-toml)
