@@ -6,32 +6,37 @@
 
 ```toml
 [tool.django]
+
+# Paths are relative to the TOML file (unless they are absolute)
 BASE_DIR = { path = "." }
+STATIC_ROOT = { path = "staticfiles" }
+
+# This sets the key based on the environment variable
 SECRET_KEY = { env = "SECRET_KEY" }
+
+# This sets the key based on the environment variable, but has a fallback
 ADMIN_URL_PATH = { env = "ADMIN_URL_PATH", default="admin" }
+
+# Booleans, arrays, tables (dictionaries), integers, strings, floats, dates are all supported in TOML
 DEBUG = true
 ALLOWED_HOSTS = [
   "127.0.0.1",
 ]
 
-# Implicit dictionaries are supported
-# This is equivalent to `COLTRANE = { TITLE = "Example blog" }`
+# This is an implicit dictionary and equivalent to `COLTRANE = { TITLE = "Example blog" }`
 [tool.django.COLTRANE]
 TITLE = "Example blog"
 
-# Any app name can be used for organizational purposes
+# Any name can be used under `apps` for organizational purposes
 [tool.django.apps.tailwind-cli]
 TAILWIND_CLI_USE_DAISY_UI = true
 TAILWIND_CLI_SRC_CSS = ".django_tailwind_cli/source.css"
 
-# These settings are included when `ENVIRONMENT` environment variable is "development"
+# These settings are included when the `ENVIRONMENT` environment variable is "development"
 [tool.django.envs.development]
-DEBUG = false
-ALLOWED_HOSTS = [
-  "example.localhost",
-]
+ALLOWED_HOSTS = { insert = "example.localhost" }
 
-# These settings are included when `ENVIRONMENT` environment variable is "production"
+# These settings are included when the `ENVIRONMENT` environment variable is "production"
 [tool.django.envs.production]
 DEBUG = false
 ALLOWED_HOSTS = { insert = "example.com" }
