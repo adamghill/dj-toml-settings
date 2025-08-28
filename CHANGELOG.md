@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0
+
+- Better support for using variables which are a `Path`.
+
 ## 0.1.0
 
 - Load `pyproject.toml` and `django.toml` files and parse them.

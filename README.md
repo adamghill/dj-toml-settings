@@ -5,11 +5,36 @@
 `dj-toml-settings` reads settings from a TOML file. By default, both `pyproject.toml` and `django.toml` files are parsed for settings in the `[tool.django]` namespace.
 
 ```toml
-# pyproject.toml
 [tool.django]
+BASE_DIR = { path = "." }
+SECRET_KEY = { env = "SECRET_KEY" }
+ADMIN_URL_PATH = { env = "ADMIN_URL_PATH", default="admin" }
+DEBUG = true
 ALLOWED_HOSTS = [
   "127.0.0.1",
 ]
+
+# Implicit dictionaries are supported
+# This is equivalent to `COLTRANE = { TITLE = "Example blog" }`
+[tool.django.COLTRANE]
+TITLE = "Example blog"
+
+# Any app name can be used for organizational purposes
+[tool.django.apps.tailwind-cli]
+TAILWIND_CLI_USE_DAISY_UI = true
+TAILWIND_CLI_SRC_CSS = ".django_tailwind_cli/source.css"
+
+# These settings are included when `ENVIRONMENT` environment variable is "development"
+[tool.django.envs.development]
+DEBUG = false
+ALLOWED_HOSTS = [
+  "example.localhost",
+]
+
+# These settings are included when `ENVIRONMENT` environment variable is "production"
+[tool.django.envs.production]
+DEBUG = false
+ALLOWED_HOSTS = { insert = "example.com" }
 ```
 
 ## Features 🤩
@@ -19,7 +44,6 @@ ALLOWED_HOSTS = [
 Use `${SOME_VARIABLE_NAME}` to use an existing setting as a value.
 
 ```toml
-# pyproject.toml
 [tool.django]
 GOOD_IPS = ["127.0.0.1"]
 ALLOWED_HOSTS = ${GOOD_IPS}
@@ -30,10 +54,6 @@ ALLOWED_HOSTS = ${GOOD_IPS}
 `[tool.django.apps.{ANY_NAME_HERE}]` sections of the TOML file can be used to group settings together. They can be named anything. They will override any settings in `[tool.django]`.
 
 ```toml
-# pyproject.toml
-[tool.django]
-ALLOWED_HOSTS = ["127.0.0.1"]
-
 [tool.django.apps.tailwind-cli]
 TAILWIND_CLI_USE_DAISY_UI = true
 TAILWIND_CLI_SRC_CSS = ".django_tailwind_cli/source.css"
@@ -44,7 +64,6 @@ TAILWIND_CLI_SRC_CSS = ".django_tailwind_cli/source.css"
 The `[tool.django.envs.{ENVIRONMENT_NAME}]` section of the TOML file will be used when `{ENVIRONMENT_NAME}` is set to the `ENVIRONMENT` environment variable. For example, `ENVIRONMENT=production python manage.py runserver` will load all settings in the `[tool.django.envs.production]` section. There settings will override any settings in `[tool.django.apps.*]` or `[tool.django]`.
 
 ```toml
-# pyproject.toml
 [tool.django]
 ALLOWED_HOSTS = ["127.0.0.1"]
 
@@ -59,10 +78,9 @@ ALLOWED_HOSTS = ["example.com"]
 
 ### Path
 
-Convert a string to a `Path` object. Handles relative paths based on the TOML file.
+Converts a string to a `Path` object. Handles relative paths based on the location of TOML file.
 
 ```toml
-# pyproject.toml
 [tool.django]
 BASE_DIR = { path = "." }
 PROJECT_DIR = { path = "./your_project_folder" }
@@ -74,7 +92,6 @@ REPOSITORY_DIR = { path = "./.." }
 Retrieve variables from the environment by using an `env` key. Specify an optional `default` key for a fallback value.
 
 ```toml
-# pyproject.toml
 [tool.django]
 EMAIL_HOST_PASSWORD = { env = 'SECRET_PASSWORD' }
 SECRET_KEY = { env = 'SECRET_KEY', default = 'this-is-a-secret' }
@@ -85,7 +102,6 @@ SECRET_KEY = { env = 'SECRET_KEY', default = 'this-is-a-secret' }
 Add items to an array by using the `insert` key.
 
 ```toml
-# pyproject.toml
 [tool.django]
 ALLOWED_HOSTS = { insert = '127.0.0.1' }
 ```

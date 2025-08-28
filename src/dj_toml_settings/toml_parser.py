@@ -105,8 +105,17 @@ def parse_key_value(data: dict, key: str, value: Any, path: Path) -> dict:
     elif isinstance(value, str):
         # Handle variable substitution
         for match in re.finditer(r"\$\{[A-Z_0-9]+\}", value):
-            if variable := data.get(value[2:-1]):
-                value = value.replace(match.string, variable)
+            data_key = value[match.start() : match.end()][2:-1]
+
+            if variable := data.get(data_key):
+                if isinstance(variable, Path):
+                    # Take whatever is before/after the variable and put it together into a new Path
+                    start = value[: match.start()]
+                    ending = value[match.end() :]
+
+                    value = Path(start + str(variable) + ending)
+                else:
+                    value = value.replace(match.string, str(variable))
             else:
                 logger.warning(f"Missing variable substitution {value}")
 

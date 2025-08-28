@@ -94,3 +94,34 @@ def test_no_files(tmp_path):
     actual = get_toml_settings(base_dir=tmp_path)
 
     assert expected == actual
+
+
+def test_data(tmp_path):
+    expected = {"DEBUG": False}
+
+    actual = get_toml_settings(base_dir=tmp_path, data={"DEBUG": False})
+
+    assert expected == actual
+
+
+def test_data_is_none(tmp_path):
+    expected = {}
+
+    actual = get_toml_settings(base_dir=tmp_path, data=None)
+
+    assert expected == actual
+
+
+def test_specified_file(tmp_path):
+    expected = {
+        "DEBUG": True,
+    }
+
+    (tmp_path / "blob.toml").write_text("""
+[tool.django]
+DEBUG = true
+""")
+
+    actual = get_toml_settings(base_dir=tmp_path, toml_settings_files=["blob.toml"])
+
+    assert expected == actual

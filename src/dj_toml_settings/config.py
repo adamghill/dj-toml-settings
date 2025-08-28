@@ -8,17 +8,16 @@ TOML_SETTINGS_FILES = ["pyproject.toml", "django.toml"]
 
 
 @typechecked
-def get_toml_settings(base_dir: Path, data: dict | None = None, toml_settings_files: list | None = None) -> dict:
+def get_toml_settings(base_dir: Path, data: dict | None = None, toml_settings_files: list[str] | None = None) -> dict:
     """Gets the Django settings from the TOML files.
 
     TOML files to look in for settings:
     - pyproject.toml
     - django.toml
     """
-    toml_settings_files = toml_settings_files or TOML_SETTINGS_FILES
 
-    if data is None:
-        data = {}
+    toml_settings_files = toml_settings_files or TOML_SETTINGS_FILES
+    data = data or {}
 
     for settings_file_name in toml_settings_files:
         settings_path = base_dir / settings_file_name

@@ -11,7 +11,8 @@ def test(tmp_path):
     expected = {"ALLOWED_HOSTS": ["127.0.0.1"]}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
@@ -26,7 +27,8 @@ def test_data(tmp_path):
     expected = {"DEBUG": False, "ALLOWED_HOSTS": ["127.0.0.1"]}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
@@ -42,7 +44,8 @@ def test_data_updated(tmp_path):
     expected = {"DEBUG": True}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 DEBUG = true
 """)
     data = {"DEBUG": False}
@@ -56,7 +59,8 @@ def test_apps(tmp_path):
     expected = {"ALLOWED_HOSTS": ["127.0.0.2"]}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
@@ -78,7 +82,8 @@ def test_environment(tmp_path, monkeypatch):
     expected = {"ALLOWED_HOSTS": ["127.0.0.2"]}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
@@ -100,7 +105,8 @@ def test_production_missing_env(tmp_path, monkeypatch):
     expected = {"ALLOWED_HOSTS": ["127.0.0.1"]}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
@@ -122,7 +128,8 @@ def test_precedence(tmp_path, monkeypatch):
     expected = {"ALLOWED_HOSTS": ["127.0.0.3"]}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 ALLOWED_HOSTS = [
     "127.0.0.1",
 ]
@@ -149,7 +156,8 @@ def test_env(tmp_path, monkeypatch):
     expected = {"SOMETHING": "blob"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = { env = "SOME_VAR" }
 """)
 
@@ -162,7 +170,8 @@ def test_env_missing(tmp_path):
     expected = {"SOMETHING": None}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = { env = "SOME_VAR" }
 """)
 
@@ -175,7 +184,8 @@ def test_env_default(tmp_path):
     expected = {"SOMETHING": "default"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = { env = "SOME_VAR", default = "default" }
 """)
 
@@ -188,7 +198,8 @@ def test_path(tmp_path):
     expected = {"SOMETHING": tmp_path / "test-file"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = { path = "test-file" }
 """)
 
@@ -201,7 +212,8 @@ def test_relative_path(tmp_path):
     expected = {"SOMETHING": tmp_path / "test-file"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = { path = "./test-file" }
 """)
 
@@ -214,7 +226,8 @@ def test_parent_path(tmp_path):
     expected = {"SOMETHING": tmp_path.parent / "test-file"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = { path = "../test-file" }
 """)
 
@@ -227,7 +240,8 @@ def test_parent_path_2(tmp_path):
     expected = {"SOMETHING": tmp_path.parent / "test-file"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = { path = "./../test-file" }
 """)
 
@@ -240,7 +254,8 @@ def test_insert(tmp_path):
     expected = {"SOMETHING": [1, 2]}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = [1]
 
 [tool.django.apps.something]
@@ -256,7 +271,8 @@ def test_insert_missing(tmp_path):
     expected = {"SOMETHING": [1]}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = { insert = 1 }
 """)
 
@@ -269,7 +285,8 @@ def test_insert_invalid(tmp_path):
     expected = {"SOMETHING": "blob"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = "hello"
 
 [tool.django.apps.something]
@@ -291,7 +308,8 @@ def test_insert_index(tmp_path):
     expected = {"SOMETHING": [1, 2]}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = [1]
 
 [tool.django.apps.something]
@@ -307,7 +325,8 @@ def test_dict(tmp_path):
     expected = {"SOMETHING": {"blob": "hello"}}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = [1]
 
 [tool.django.apps.something]
@@ -319,11 +338,26 @@ SOMETHING = { blob = "hello" }
     assert expected == actual
 
 
+def test_dict_section(tmp_path):
+    expected = {"SOMETHING": {"blob": "hello"}}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django.SOMETHING]
+blob = "hello"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
 def test_variable(tmp_path):
     expected = {"SOMETHING": "hello", "SOMETHING2": "hello"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = "hello"
 
 [tool.django.apps.something]
@@ -339,7 +373,8 @@ def test_variable_invalid(tmp_path, caplog):
     expected = {"SOMETHING": "${SOMETHING2}", "SOMETHING2": "hello"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = "${SOMETHING2}"
 
 [tool.django.apps.something]
@@ -362,7 +397,8 @@ def test_variable_missing(tmp_path, caplog):
     expected = {"SOMETHING": "hello", "SOMETHING2": "${SOMETHING1}"}
 
     path = tmp_path / "pyproject.toml"
-    path.write_text("""[tool.django]
+    path.write_text("""
+[tool.django]
 SOMETHING = "hello"
 
 [tool.django.apps.something]
@@ -379,6 +415,36 @@ SOMETHING2 = "${SOMETHING1}"
         actual = caplog.records[0]
 
         assert "Missing variable substitution ${SOMETHING1}" == str(actual.msg)
+
+
+def test_variable_start_path(tmp_path):
+    expected = {"BASE_DIR": tmp_path, "STATIC_ROOT": tmp_path / "staticfiles"}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+BASE_DIR = { path = "." }
+STATIC_ROOT = "${BASE_DIR}/staticfiles"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_end_path(tmp_path):
+    expected = {"BASE_DIR": Path("/something"), "STATIC_ROOT": Path("/blob/something")}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+BASE_DIR = { path = "/something" }
+STATIC_ROOT = "/blob${BASE_DIR}"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
 
 
 def test_invalid_toml(tmp_path, caplog):
