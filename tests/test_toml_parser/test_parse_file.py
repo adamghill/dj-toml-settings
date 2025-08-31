@@ -1,7 +1,9 @@
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
+from dateutil import parser as dateparser
 
 from dj_toml_settings.exceptions import InvalidActionError
 from dj_toml_settings.toml_parser import parse_file
@@ -158,7 +160,7 @@ def test_env(tmp_path, monkeypatch):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { env = "SOME_VAR" }
+SOMETHING = { $env = "SOME_VAR" }
 """)
 
     actual = parse_file(path)
@@ -172,7 +174,7 @@ def test_env_missing(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { env = "SOME_VAR" }
+SOMETHING = { $env = "SOME_VAR" }
 """)
 
     actual = parse_file(path)
@@ -186,7 +188,7 @@ def test_env_default(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { env = "SOME_VAR", default = "default" }
+SOMETHING = { $env = "SOME_VAR", $default = "default" }
 """)
 
     actual = parse_file(path)
@@ -200,7 +202,7 @@ def test_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { path = "test-file" }
+SOMETHING = { $path = "test-file" }
 """)
 
     actual = parse_file(path)
@@ -214,7 +216,7 @@ def test_relative_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { path = "./test-file" }
+SOMETHING = { $path = "./test-file" }
 """)
 
     actual = parse_file(path)
@@ -228,7 +230,7 @@ def test_parent_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { path = "../test-file" }
+SOMETHING = { $path = "../test-file" }
 """)
 
     actual = parse_file(path)
@@ -242,7 +244,7 @@ def test_parent_path_2(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { path = "./../test-file" }
+SOMETHING = { $path = "./../test-file" }
 """)
 
     actual = parse_file(path)
@@ -259,7 +261,7 @@ def test_insert(tmp_path):
 SOMETHING = [1]
 
 [tool.django.apps.something]
-SOMETHING = { insert = 2 }
+SOMETHING = { $insert = 2 }
 """)
 
     actual = parse_file(path)
@@ -273,7 +275,7 @@ def test_insert_missing(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { insert = 1 }
+SOMETHING = { $insert = 1 }
 """)
 
     actual = parse_file(path)
@@ -290,7 +292,7 @@ def test_insert_invalid(tmp_path):
 SOMETHING = "hello"
 
 [tool.django.apps.something]
-SOMETHING = { insert = 1 }
+SOMETHING = { $insert = 1 }
 """)
 
     with pytest.raises(InvalidActionError) as e:
@@ -313,7 +315,7 @@ def test_insert_index(tmp_path):
 SOMETHING = [1]
 
 [tool.django.apps.something]
-SOMETHING = { insert = 2, index = 2 }
+SOMETHING = { $insert = 2, :index = 2 }
 """)
 
     actual = parse_file(path)
@@ -362,6 +364,242 @@ SOMETHING = "hello"
 
 [tool.django.apps.something]
 SOMETHING2 = "${SOMETHING}"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_callable(tmp_path):
+    def some_function():
+        pass
+
+    expected = {"SOMETHING": some_function}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+SOMETHING = "${some_function}"
+""")
+
+    actual = parse_file(path, {"some_function": some_function})
+
+    assert id(expected["SOMETHING"]) == id(actual["SOMETHING"])
+
+
+def test_variable_int(tmp_path):
+    expected = {"INT": 123, "TEST": 1234}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+INT = 123
+TEST = "${INT}4"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_int_with_string(tmp_path):
+    expected = {"INT": 123, "TEST": "a123"}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+INT = 123
+TEST = "a${INT}"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_float(tmp_path):
+    expected = {"FLOAT": 123.1, "TEST": 123.14}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+FLOAT = 123.1
+TEST = "${FLOAT}4"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_float_with_string(tmp_path):
+    expected = {"FLOAT": 123.1, "TEST": "a123.1"}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+FLOAT = 123.1
+TEST = "a${FLOAT}"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_array(tmp_path):
+    expected = {"ARRAY": [1, 2, 3], "TEST": [1, 2, 3]}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+ARRAY = [1, 2, 3]
+TEST = "${ARRAY}"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_dictionary(tmp_path):
+    expected = {"HASH": {"a": 1}, "TEST": {"a": 1}}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+HASH = { a = 1 }
+TEST = "${HASH}"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_inline_table(tmp_path):
+    expected = {"HASH": {"a": 1}, "TEST": {"a": 1}}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django.HASH]
+a = 1
+
+[tool.django.apps.blob]
+TEST = "${HASH}"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_datetime_utc(tmp_path):
+    expected = {
+        "DATETIME": datetime(2025, 8, 30, 7, 32, tzinfo=timezone.utc),
+        "TEST": datetime(2025, 8, 30, 7, 32, tzinfo=timezone.utc),
+    }
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+DATETIME = 2025-08-30T07:32:00Z
+
+[tool.django.apps.blob]
+TEST = "${DATETIME}"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_variable_datetime_tz(tmp_path):
+    expected = {
+        "DATETIME": dateparser.parse("2025-08-30T00:32:00-07:00"),
+        "TEST": dateparser.parse("2025-08-30T00:32:00-07:00"),
+    }
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+DATETIME = 2025-08-30T00:32:00-07:00
+
+[tool.django.apps.blob]
+TEST = "${DATETIME}"
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_none(tmp_path):
+    expected = {"TEST": None}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+TEST = { $none = 1 }
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_special_prefix(tmp_path):
+    expected = {
+        "TOML_SETTINGS_SPECIAL_PREFIX": "&",
+        "TEST": None,
+    }
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+TOML_SETTINGS_SPECIAL_PREFIX = "&"
+TEST = { &none = 1 }
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_special_suffix(tmp_path):
+    expected = {
+        "TOML_SETTINGS_SPECIAL_PREFIX": "",
+        "TOML_SETTINGS_SPECIAL_SUFFIX": "*",
+        "TEST": None,
+    }
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+TOML_SETTINGS_SPECIAL_PREFIX = ""
+TOML_SETTINGS_SPECIAL_SUFFIX = "*"
+TEST = { none* = 1 }
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
+def test_special_prefix_and_suffix(tmp_path):
+    expected = {
+        "TOML_SETTINGS_SPECIAL_PREFIX": "&",
+        "TOML_SETTINGS_SPECIAL_SUFFIX": "*",
+        "TEST": None,
+    }
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+TOML_SETTINGS_SPECIAL_PREFIX = "&"
+TOML_SETTINGS_SPECIAL_SUFFIX = "*"
+TEST = { &none* = 1 }
 """)
 
     actual = parse_file(path)
@@ -423,7 +661,7 @@ def test_variable_start_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-BASE_DIR = { path = "." }
+BASE_DIR = { $path = "." }
 STATIC_ROOT = "${BASE_DIR}/staticfiles"
 """)
 
@@ -438,7 +676,7 @@ def test_variable_end_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-BASE_DIR = { path = "/something" }
+BASE_DIR = { $path = "/something" }
 STATIC_ROOT = "/blob${BASE_DIR}"
 """)
 

@@ -8,14 +8,14 @@
 [tool.django]
 
 # Paths are relative to the TOML file (unless they are absolute)
-BASE_DIR = { path = "." }
-STATIC_ROOT = { path = "staticfiles" }
+BASE_DIR = { $path = "." }
+STATIC_ROOT = { $path = "staticfiles" }
 
 # This sets the key based on the environment variable
-SECRET_KEY = { env = "SECRET_KEY" }
+SECRET_KEY = { $env = "SECRET_KEY" }
 
 # This sets the key based on the environment variable, but has a fallback
-ADMIN_URL_PATH = { env = "ADMIN_URL_PATH", default="admin" }
+ADMIN_URL_PATH = { $env = "ADMIN_URL_PATH", default="admin" }
 
 # Booleans, arrays, tables (dictionaries), integers, strings, floats, dates are all supported in TOML
 DEBUG = true
@@ -34,12 +34,12 @@ TAILWIND_CLI_SRC_CSS = ".django_tailwind_cli/source.css"
 
 # These settings are included when the `ENVIRONMENT` environment variable is "development"
 [tool.django.envs.development]
-ALLOWED_HOSTS = { insert = "example.localhost" }
+ALLOWED_HOSTS = { $insert = "example.localhost" }
 
 # These settings are included when the `ENVIRONMENT` environment variable is "production"
 [tool.django.envs.production]
 DEBUG = false
-ALLOWED_HOSTS = { insert = "example.com" }
+ALLOWED_HOSTS = { $insert = "example.com" }
 ```
 
 ## Features 🤩
@@ -81,34 +81,45 @@ ALLOWED_HOSTS = ["example.com"]
 
 ## Special operations 😎
 
-### Path
+By default, special operations are denoted by an [`inline table`](https://toml.io/en/v1.0.0#inline-table), (aka a `dictionary`) with a key that starts with a `$`.
 
-Converts a string to a `Path` object. Handles relative paths based on the location of TOML file.
+The prefix and suffix that denotes a special operation can be configured with `TOML_SETTINGS_SPECIAL_PREFIX` or `TOML_SETTINGS_SPECIAL_SUFFIX` in `[tool.django]`.
 
 ```toml
 [tool.django]
-BASE_DIR = { path = "." }
-PROJECT_DIR = { path = "./your_project_folder" }
-REPOSITORY_DIR = { path = "./.." }
+TOML_SETTINGS_SPECIAL_PREFIX = "&"
+TOML_SETTINGS_SPECIAL_SUFFIX = "*"
+BASE_DIR = { &path* = "." }
+```
+
+### Path
+
+Converts a string to a `Path` object by using a `$path` key. Handles relative paths based on the location of the parsed TOML file.
+
+```toml
+[tool.django]
+BASE_DIR = { $path = "." }
+PROJECT_DIR = { $path = "./your_project_folder" }
+REPOSITORY_DIR = { $path = "./.." }
 ```
 
 ### Environment Variable
 
-Retrieve variables from the environment by using an `env` key. Specify an optional `default` key for a fallback value.
+Retrieve variables from the environment by using an `$env` key. Specify an optional `$default` key for a fallback value.
 
 ```toml
 [tool.django]
-EMAIL_HOST_PASSWORD = { env = 'SECRET_PASSWORD' }
-SECRET_KEY = { env = 'SECRET_KEY', default = 'this-is-a-secret' }
+EMAIL_HOST_PASSWORD = { $env = "SECRET_PASSWORD" }
+SECRET_KEY = { $env = "SECRET_KEY", $default = "this-is-a-secret" }
 ```
 
 ### Arrays
 
-Add items to an array by using the `insert` key.
+Add items to an array by using the `$insert` key.
 
 ```toml
 [tool.django]
-ALLOWED_HOSTS = { insert = '127.0.0.1' }
+ALLOWED_HOSTS = { $insert = "127.0.0.1" }
 ```
 
 ## Example Integrations 💚

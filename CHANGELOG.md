@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- Handle `datetime`, `int`, `float`, `list`, `dict`, `datetime`, and `Callable` as variables.
+- Handle appending to a variable for `Path`.
+
+### Breaking changes
+
+- Start special operations with "$" to reduce key conflicts. Can be configured as "" to replicate 0.2.0.
+
 ## 0.2.0
 
 - Better support for using variables which are a `Path`.

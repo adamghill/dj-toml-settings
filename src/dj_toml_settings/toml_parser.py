@@ -1,10 +1,12 @@
 import logging
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import toml
+from dateutil import parser as dateparser
 from typeguard import typechecked
 
 from dj_toml_settings.exceptions import InvalidActionError
@@ -75,55 +77,98 @@ def parse_key_value(data: dict, key: str, value: Any, path: Path) -> dict:
     """Handle special cases for `value`.
 
     Special cases:
-    - `env`: retrieves an environment variable; optional `default`, argument
-    - `path`: converts string to a `Path`; handles relative path
-    - `insert`: inserts the value to an array; optional `index` argument
+    - `dict` keys
+        - `$env`: retrieves an environment variable; optional `default` argument
+        - `$path`: converts string to a `Path`; handles relative path
+        - `$insert`: inserts the value to an array; optional `index` argument
+        - `$none`: inserts the `None` value
+    - variables in `str`
+    - `datetime`
     """
 
     if isinstance(value, dict):
-        if "env" in value:
-            default_value = value.get("default")
+        # Defaults to "$env" and "$default"
+        env_special_key = _get_special_key(data, "env")
+        default_special_key = _get_special_key(data, "default")
 
-            value = os.getenv(value["env"], default_value)
-        elif "path" in value:
-            file_name = value["path"]
+        # Defaults to "$path"
+        path_special_key = _get_special_key(data, "path")
 
-            value = parse_path(path, file_name)
-        elif "insert" in value:
+        # Defaults to "$insert" and "$variable"
+        insert_special_key = _get_special_key(data, "insert")
+        variable_special_key = _get_special_key(data, "variable")
+
+        # Defaults to "$none"
+        none_special_key = _get_special_key(data, "none")
+
+        if env_special_key in value:
+            default_value = value.get(default_special_key)
+
+            value = os.getenv(value[env_special_key], default_value)
+        elif path_special_key in value:
+            file_name = value[path_special_key]
+
+            value = _parse_path(path, file_name)
+        elif insert_special_key in value:
             insert_data = data.get(key, [])
+            variable = data.get(variable_special_key)
 
             # Check the existing value is an array
             if not isinstance(insert_data, list):
                 raise InvalidActionError(f"`insert` cannot be used for value of type: {type(data[key])}")
 
             # Insert the data
-            index = value.get("index", len(insert_data))
-            insert_data.insert(index, value["insert"])
+            index = value.get(insert_special_key, len(insert_data))
+            insert_data.insert(index, value[insert_special_key])
 
             # Set the value to the new data
             value = insert_data
+        elif none_special_key in value and value.get(none_special_key):
+            value = None
     elif isinstance(value, str):
         # Handle variable substitution
-        for match in re.finditer(r"\$\{[A-Z_0-9]+\}", value):
+        for match in re.finditer(r"\$\{\w+\}", value):
             data_key = value[match.start() : match.end()][2:-1]
 
             if variable := data.get(data_key):
                 if isinstance(variable, Path):
-                    # Take whatever is before/after the variable and put it together into a new Path
-                    start = value[: match.start()]
-                    ending = value[match.end() :]
+                    path_str = _combine_bookends(value, match, variable)
 
-                    value = Path(start + str(variable) + ending)
+                    value = Path(path_str)
+                elif callable(variable):
+                    value = variable
+                elif isinstance(variable, int):
+                    value = _combine_bookends(value, match, variable)
+
+                    try:
+                        value = int(value)
+                    except Exception:  # noqa: S110
+                        pass
+                elif isinstance(variable, float):
+                    value = _combine_bookends(value, match, variable)
+
+                    try:
+                        value = float(value)
+                    except Exception:  # noqa: S110
+                        pass
+                elif isinstance(variable, list):
+                    value = variable
+                elif isinstance(variable, dict):
+                    value = variable
+                elif isinstance(variable, datetime):
+                    value = dateparser.isoparse(str(variable))
                 else:
                     value = value.replace(match.string, str(variable))
             else:
                 logger.warning(f"Missing variable substitution {value}")
+    elif isinstance(value, datetime):
+        value = dateparser.isoparse(str(value))
 
     return {key: value}
 
 
 @typechecked
-def parse_path(path: Path, file_name: str) -> Path:
+def _parse_path(path: Path, file_name: str) -> Path:
     """Parse a path string relative to a base path.
 
     Args:
@@ -134,3 +179,36 @@ def parse_path(path: Path, file_name: str) -> Path:
     _path = Path(path).parent if path.is_file() else path
 
     return (_path / file_name).resolve()
+
+
+@typechecked
+def _combine_bookends(original: str, match: re.Match, middle: Any) -> str:
+    """Get the beginning of the original string before the match, and the
+    end of the string after the match and smush the replaced value in between
+    them to generate a new string.
+    """
+
+    start_idx = match.start()
+    start = original[:start_idx]
+
+    end_idx = match.end()
+    ending = original[end_idx:]
+
+    return start + str(middle) + ending
+
+
+@typechecked
+def _get_special_key(data: dict, key: str) -> str:
+    """Gets the key for the "special". Defaults to "$" as the prefix, and "" as the suffix.
+
+    To change in the included TOML settings, set:
+    ```
+    TOML_SETTINGS_SPECIAL_PREFIX = ""
+    TOML_SETTINGS_SPECIAL_SUFFIX = ""
+    ```
+    """
+
+    prefix = data.get("TOML_SETTINGS_SPECIAL_PREFIX", "$")
+    suffix = data.get("TOML_SETTINGS_SPECIAL_SUFFIX", "")
+
+    return f"{prefix}{key}{suffix}"

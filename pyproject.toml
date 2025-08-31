@@ -1,6 +1,6 @@
 [project]
 name = "dj-toml-settings"
-version = "0.2.0"
+version = "0.3.0"
 description = "Load Django settings from a TOML file"
 authors = [
   { name = "Adam Hill", email = "adam@adamghill.com" },
@@ -27,6 +27,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
+    "python-dateutil>=2.9.0.post0",
     "toml>=0.10.2",
     "typeguard>=2",
 ]
@@ -38,6 +39,7 @@ dev-dependencies = [
     "pytest-cov >= 0",
     "mypy >= 0",
     "types-toml >= 0",
+    "types-python-dateutil >= 0",
 ]
 
 [project.urls]
