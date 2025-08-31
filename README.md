@@ -15,7 +15,7 @@ STATIC_ROOT = { $path = "staticfiles" }
 SECRET_KEY = { $env = "SECRET_KEY" }
 
 # This sets the key based on the environment variable, but has a fallback
-ADMIN_URL_PATH = { $env = "ADMIN_URL_PATH", default="admin" }
+ADMIN_URL_PATH = { $env = "ADMIN_URL_PATH", $default="admin" }
 
 # Booleans, arrays, tables (dictionaries), integers, strings, floats, dates are all supported in TOML
 DEBUG = true
@@ -120,6 +120,13 @@ Add items to an array by using the `$insert` key.
 ```toml
 [tool.django]
 ALLOWED_HOSTS = { $insert = "127.0.0.1" }
+```
+
+Specify the index of the new item with the `$index` key.
+
+```toml
+[tool.django]
+ALLOWED_HOSTS = { $insert = "127.0.0.1", $index = 0 }
 ```
 
 ## Example Integrations 💚

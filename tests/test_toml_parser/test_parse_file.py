@@ -307,7 +307,7 @@ SOMETHING = { $insert = 1 }
 
 
 def test_insert_index(tmp_path):
-    expected = {"SOMETHING": [1, 2]}
+    expected = {"SOMETHING": [2, 1]}
 
     path = tmp_path / "pyproject.toml"
     path.write_text("""
@@ -315,7 +315,7 @@ def test_insert_index(tmp_path):
 SOMETHING = [1]
 
 [tool.django.apps.something]
-SOMETHING = { $insert = 2, :index = 2 }
+SOMETHING = { $insert = 2, $index = 0 }
 """)
 
     actual = parse_file(path)

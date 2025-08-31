@@ -96,7 +96,7 @@ def parse_key_value(data: dict, key: str, value: Any, path: Path) -> dict:
 
         # Defaults to "$insert" and "$variable"
         insert_special_key = _get_special_key(data, "insert")
-        variable_special_key = _get_special_key(data, "variable")
+        index_special_key = _get_special_key(data, "index")
 
         # Defaults to "$none"
         none_special_key = _get_special_key(data, "none")
@@ -111,14 +111,13 @@ def parse_key_value(data: dict, key: str, value: Any, path: Path) -> dict:
             value = _parse_path(path, file_name)
         elif insert_special_key in value:
             insert_data = data.get(key, [])
-            variable = data.get(variable_special_key)
 
             # Check the existing value is an array
             if not isinstance(insert_data, list):
                 raise InvalidActionError(f"`insert` cannot be used for value of type: {type(data[key])}")
 
             # Insert the data
-            index = value.get(insert_special_key, len(insert_data))
+            index = value.get(index_special_key, len(insert_data))
             insert_data.insert(index, value[insert_special_key])
 
             # Set the value to the new data
