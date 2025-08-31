@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- Fix `$index`.
+
 ## 0.3.0
 
 - Handle `datetime`, `int`, `float`, `list`, `dict`, `datetime`, and `Callable` as variables.
