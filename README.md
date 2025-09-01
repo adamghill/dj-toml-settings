@@ -51,7 +51,7 @@ Use `${SOME_VARIABLE_NAME}` to use an existing setting as a value.
 ```toml
 [tool.django]
 GOOD_IPS = ["127.0.0.1"]
-ALLOWED_HOSTS = ${GOOD_IPS}
+ALLOWED_HOSTS = "${GOOD_IPS}"  # this needs to be quoted to be valid TOML, but will be converted into a `list`
 ```
 
 ### Apps
@@ -89,7 +89,7 @@ The prefix and suffix that denotes a special operation can be configured with `T
 [tool.django]
 TOML_SETTINGS_SPECIAL_PREFIX = "&"
 TOML_SETTINGS_SPECIAL_SUFFIX = "*"
-BASE_DIR = { &path* = "." }
+BASE_DIR = { "&path*" = "." }
 ```
 
 ### Path
