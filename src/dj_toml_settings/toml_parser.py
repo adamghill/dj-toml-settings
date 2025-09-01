@@ -198,7 +198,7 @@ def _combine_bookends(original: str, match: re.Match, middle: Any) -> str:
 
 @typechecked
 def _get_special_key(data: dict, key: str) -> str:
-    """Gets the key for the "special". Defaults to "$" as the prefix, and "" as the suffix.
+    """Gets the key for the special operator. Defaults to "$" as the prefix, and "" as the suffix.
 
     To change in the included TOML settings, set:
     ```

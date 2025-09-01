@@ -8,6 +8,7 @@
 
 - Handle `datetime`, `int`, `float`, `list`, `dict`, `datetime`, and `Callable` as variables.
 - Handle appending to a variable for `Path`.
+- Add `$none` special operator.
 
 ### Breaking changes
 

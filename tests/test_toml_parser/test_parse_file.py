@@ -168,6 +168,22 @@ SOMETHING = { $env = "SOME_VAR" }
     assert expected == actual
 
 
+def test_env_quoted_key(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOME_VAR", "blob")
+
+    expected = {"SOMETHING": "blob"}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+SOMETHING = { "$env" = "SOME_VAR" }
+""")
+
+    actual = parse_file(path)
+
+    assert expected == actual
+
+
 def test_env_missing(tmp_path):
     expected = {"SOMETHING": None}
 

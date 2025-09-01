@@ -8,14 +8,14 @@
 [tool.django]
 
 # Paths are relative to the TOML file (unless they are absolute)
-BASE_DIR = { $path = "." }
-STATIC_ROOT = { $path = "staticfiles" }
+BASE_DIR = { "$path" = "." }
+STATIC_ROOT = { "$path" = "staticfiles" }
 
 # This sets the key based on the environment variable
-SECRET_KEY = { $env = "SECRET_KEY" }
+SECRET_KEY = { "$env" = "SECRET_KEY" }
 
 # This sets the key based on the environment variable, but has a fallback
-ADMIN_URL_PATH = { $env = "ADMIN_URL_PATH", $default="admin" }
+ADMIN_URL_PATH = { "$env" = "ADMIN_URL_PATH", "$default"="admin" }
 
 # Booleans, arrays, tables (dictionaries), integers, strings, floats, dates are all supported in TOML
 DEBUG = true
@@ -34,12 +34,12 @@ TAILWIND_CLI_SRC_CSS = ".django_tailwind_cli/source.css"
 
 # These settings are included when the `ENVIRONMENT` environment variable is "development"
 [tool.django.envs.development]
-ALLOWED_HOSTS = { $insert = "example.localhost" }
+ALLOWED_HOSTS = { "$insert" = "example.localhost" }
 
 # These settings are included when the `ENVIRONMENT` environment variable is "production"
 [tool.django.envs.production]
 DEBUG = false
-ALLOWED_HOSTS = { $insert = "example.com" }
+ALLOWED_HOSTS = { "$insert" = "example.com" }
 ```
 
 ## Features 🤩
@@ -98,9 +98,9 @@ Converts a string to a `Path` object by using a `$path` key. Handles relative pa
 
 ```toml
 [tool.django]
-BASE_DIR = { $path = "." }
-PROJECT_DIR = { $path = "./your_project_folder" }
-REPOSITORY_DIR = { $path = "./.." }
+BASE_DIR = { "$path" = "." }
+PROJECT_DIR = { "$path" = "./your_project_folder" }
+REPOSITORY_DIR = { "$path" = "./.." }
 ```
 
 ### Environment Variable
@@ -109,8 +109,8 @@ Retrieve variables from the environment by using an `$env` key. Specify an optio
 
 ```toml
 [tool.django]
-EMAIL_HOST_PASSWORD = { $env = "SECRET_PASSWORD" }
-SECRET_KEY = { $env = "SECRET_KEY", $default = "this-is-a-secret" }
+EMAIL_HOST_PASSWORD = { "$env" = "SECRET_PASSWORD" }
+SECRET_KEY = { "$env" = "SECRET_KEY", "$default" = "this-is-a-secret" }
 ```
 
 ### Arrays
@@ -119,14 +119,23 @@ Add items to an array by using the `$insert` key.
 
 ```toml
 [tool.django]
-ALLOWED_HOSTS = { $insert = "127.0.0.1" }
+ALLOWED_HOSTS = { "$insert" = "127.0.0.1" }
 ```
 
 Specify the index of the new item with the `$index` key.
 
 ```toml
 [tool.django]
-ALLOWED_HOSTS = { $insert = "127.0.0.1", $index = 0 }
+ALLOWED_HOSTS = { "$insert" = "127.0.0.1", "$index" = 0 }
+```
+
+### None
+
+Specify `None` for a variable with a `$none` key. The value must be truthy, i.e. `true` or 1 (even though the value won't get used).
+
+```toml
+[tool.django]
+EMAIL_HOST_PASSWORD = { "$none" = 1 }
 ```
 
 ## Example Integrations 💚
