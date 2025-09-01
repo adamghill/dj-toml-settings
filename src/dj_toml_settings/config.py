@@ -1,3 +1,5 @@
+import importlib
+import os
 from pathlib import Path
 
 from typeguard import typechecked
@@ -29,7 +31,7 @@ def get_toml_settings(base_dir: Path, data: dict | None = None, toml_settings_fi
 
 
 @typechecked
-def configure_toml_settings(base_dir: Path, data: dict) -> None:
+def configure_toml_settings(base_dir: Path, data: dict | None = None) -> None:
     """Configure Django settings from TOML files.
 
     Args:
@@ -41,4 +43,12 @@ def configure_toml_settings(base_dir: Path, data: dict) -> None:
     """
 
     toml_settings = get_toml_settings(base_dir, data)
-    data.update(toml_settings)
+    if data is not None:
+        data.update(toml_settings)
+    else:
+        dsm = os.getenv("DJANGO_SETTINGS_MODULE")
+        if not dsm:
+            raise RuntimeError("No DJANGO_SETTINGS_MODULE environment variable configured")
+        module = importlib.import_module(dsm)
+        for k, v in toml_settings.items():
+            setattr(module, k, v)
