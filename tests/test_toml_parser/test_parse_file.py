@@ -339,7 +339,7 @@ SOMETHING = { $insert = 2, $index = 0 }
     assert expected == actual
 
 
-def test_dict(tmp_path):
+def test_inline_table(tmp_path):
     expected = {"SOMETHING": {"blob": "hello"}}
 
     path = tmp_path / "pyproject.toml"
@@ -356,7 +356,7 @@ SOMETHING = { blob = "hello" }
     assert expected == actual
 
 
-def test_dict_section(tmp_path):
+def test_table(tmp_path):
     expected = {"SOMETHING": {"blob": "hello"}}
 
     path = tmp_path / "pyproject.toml"
@@ -367,6 +367,39 @@ blob = "hello"
 
     actual = parse_file(path)
 
+    assert expected == actual
+
+
+def test_all_dictionaries(tmp_path):
+    path = tmp_path / "pyproject.toml"
+
+    expected = {"DATABASES": {"default": {"ENGINE": "django.db.backends.postgresql"}}}
+
+    # inline table
+    path.write_text("""
+[tool.django]
+DATABASES = { default = { ENGINE = "django.db.backends.postgresql" } }
+""")
+
+    actual = parse_file(path)
+    assert expected == actual
+
+    # table for DATABASES
+    path.write_text("""
+[tool.django.DATABASES]
+default = { ENGINE = "django.db.backends.postgresql" }
+""")
+
+    actual = parse_file(path)
+    assert expected == actual
+
+    # table for DATABASES.default
+    path.write_text("""
+[tool.django.DATABASES.default]
+ENGINE = "django.db.backends.postgresql"
+""")
+
+    actual = parse_file(path)
     assert expected == actual
 
 
