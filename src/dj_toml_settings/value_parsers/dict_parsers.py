@@ -7,7 +7,7 @@ from typeguard import typechecked
 from dj_toml_settings.exceptions import InvalidActionError
 
 
-class DictValueParser:
+class DictParser:
     data: dict
     value: str
 
@@ -43,7 +43,7 @@ class DictValueParser:
         raise NotImplementedError("parse() not implemented")
 
 
-class EnvValueParser(DictValueParser):
+class EnvParser(DictParser):
     key: str = "env"
 
     def parse(self) -> Any:
@@ -56,7 +56,7 @@ class EnvValueParser(DictValueParser):
         return value
 
 
-class PathValueParser(DictValueParser):
+class PathParser(DictParser):
     key: str = "path"
 
     def __init__(self, data: dict, value: str, path: Path):
@@ -83,14 +83,14 @@ class PathValueParser(DictValueParser):
         return (current_path / self.file_name).resolve()
 
 
-class ValueValueParser(DictValueParser):
+class ValueParser(DictParser):
     key = "value"
 
     def parse(self) -> Any:
         return self.value[self.key]
 
 
-class InsertValueParser(DictValueParser):
+class InsertParser(DictParser):
     key = "insert"
 
     def __init__(self, data: dict, value: str, data_key: str):
@@ -113,7 +113,7 @@ class InsertValueParser(DictValueParser):
         return insert_data
 
 
-class NoneValueParser(DictValueParser):
+class NoneParser(DictParser):
     key = "none"
 
     def match(self) -> bool:
@@ -123,7 +123,7 @@ class NoneValueParser(DictValueParser):
         return None
 
 
-class TypeValueParser(DictValueParser):
+class TypeParser(DictParser):
     key = "type"
 
     def parse(self, resolved_value: Any) -> Any:

@@ -9,14 +9,15 @@ import toml
 from dateutil import parser as dateparser
 from typeguard import typechecked
 
-from dj_toml_settings.value_parsers.dict_value_parsers import (
-    EnvValueParser,
-    InsertValueParser,
-    NoneValueParser,
-    PathValueParser,
-    TypeValueParser,
-    ValueValueParser,
+from dj_toml_settings.value_parsers.dict_parsers import (
+    EnvParser,
+    InsertParser,
+    NoneParser,
+    PathParser,
+    TypeParser,
+    ValueParser,
 )
+from dj_toml_settings.value_parsers.str_parsers import VariableParser
 
 logger = logging.getLogger(__name__)
 
@@ -65,14 +66,14 @@ class Parser:
         for key, value in toml_data.items():
             logger.debug(f"tool.django: Update '{key}' with '{value}'")
 
-            self.data.update(self.parse_key_value(key, value))
+            self.data.update({key: self.parse_value(key, value)})
 
         # Add settings from `tool.django.apps.*`
         for apps_name, apps_value in apps_data.items():
             for app_key, app_value in apps_value.items():
                 logger.debug(f"tool.django.apps.{apps_name}: Update '{app_key}' with '{app_value}'")
 
-                self.data.update(self.parse_key_value(app_key, app_value))
+                self.data.update({app_key: self.parse_value(app_key, app_value)})
 
         # Add settings from `tool.django.envs.*` if it matches the `ENVIRONMENT` env variable
         if environment_env_variable := os.getenv("ENVIRONMENT"):
@@ -81,7 +82,7 @@ class Parser:
                     for env_key, env_value in envs_value.items():
                         logger.debug(f"tool.django.envs.{envs_name}: Update '{env_key}' with '{env_value}'")
 
-                        self.data.update(self.parse_key_value(env_key, env_value))
+                        self.data.update({env_key: self.parse_value(env_key, env_value)})
 
         return self.data
 
@@ -101,7 +102,7 @@ class Parser:
         return data.get("tool", {}).get("django", {}) or {}
 
     @typechecked
-    def parse_key_value(self, key: str, value: Any) -> dict:
+    def parse_value(self, key: Any, value: Any) -> Any:
         """Handle special cases for `value`.
 
         Special cases:
@@ -116,13 +117,33 @@ class Parser:
         - `datetime`
         """
 
-        if isinstance(value, dict):
-            type_parser = TypeValueParser(data=self.data, value=value)
-            env_parser = EnvValueParser(data=self.data, value=value)
-            path_parser = PathValueParser(data=self.data, value=value, path=self.path)
-            value_parser = ValueValueParser(data=self.data, value=value)
-            none_parser = NoneValueParser(data=self.data, value=value)
-            insert_parser = InsertValueParser(data=self.data, value=value, data_key=key)
+        if isinstance(value, list):
+            processed_list = []
+
+            for item in value:
+                processed_item = self.parse_value(key, item)
+                processed_list.append(processed_item)
+
+            value = processed_list
+        elif isinstance(value, dict):
+            # Process nested dictionaries
+            processed_dict = {}
+
+            for k, v in value.items():
+                if isinstance(v, dict):
+                    processed_dict.update({k: self.parse_value(key, v)})
+                else:
+                    processed_dict[k] = v
+
+            if processed_dict:
+                value = processed_dict
+
+            type_parser = TypeParser(data=self.data, value=value)
+            env_parser = EnvParser(data=self.data, value=value)
+            path_parser = PathParser(data=self.data, value=value, path=self.path)
+            value_parser = ValueParser(data=self.data, value=value)
+            none_parser = NoneParser(data=self.data, value=value)
+            insert_parser = InsertParser(data=self.data, value=value, data_key=key)
 
             # Check for a match for all specials (except $type)
             for parser in [env_parser, path_parser, value_parser, insert_parser, none_parser]:
@@ -134,42 +155,8 @@ class Parser:
             if type_parser.match():
                 value = type_parser.parse(value)
         elif isinstance(value, str):
-            # Handle variable substitution
-            for match in re.finditer(r"\$\{\w+\}", value):
-                data_key = value[match.start() : match.end()][2:-1]
-
-                if variable := self.data.get(data_key):
-                    if isinstance(variable, Path):
-                        path_str = combine_bookends(value, match, variable)
-
-                        value = Path(path_str)
-                    elif callable(variable):
-                        value = variable
-                    elif isinstance(variable, int):
-                        value = combine_bookends(value, match, variable)
-
-                        try:
-                            value = int(value)
-                        except Exception:  # noqa: S110
-                            pass
-                    elif isinstance(variable, float):
-                        value = combine_bookends(value, match, variable)
-
-                        try:
-                            value = float(value)
-                        except Exception:  # noqa: S110
-                            pass
-                    elif isinstance(variable, list):
-                        value = variable
-                    elif isinstance(variable, dict):
-                        value = variable
-                    elif isinstance(variable, datetime):
-                        value = dateparser.isoparse(str(variable))
-                    else:
-                        value = value.replace(match.string, str(variable))
-                else:
-                    logger.warning(f"Missing variable substitution {value}")
+            value = VariableParser(data=self.data, value=value).parse()
         elif isinstance(value, datetime):
             value = dateparser.isoparse(str(value))
 
-        return {key: value}
+        return value

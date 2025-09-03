@@ -182,6 +182,54 @@ SOMETHING = { $env = "SOME_VAR" }
     assert expected == actual
 
 
+def test_env_in_nested_dict(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOME_VAR", "blob")
+
+    expected = {"SOMETHING": {"MORE": "blob"}}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+SOMETHING = { MORE = { $env = "SOME_VAR" } }
+""")
+
+    actual = Parser(path).parse_file()
+
+    assert expected == actual
+
+
+def test_env_in_list(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOME_VAR", "blob")
+
+    expected = {"SOMETHING": ["blob"]}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+SOMETHING = [{ "$env" = "SOME_VAR"}]
+""")
+
+    actual = Parser(path).parse_file()
+
+    assert expected == actual
+
+
+def test_variable_in_list(tmp_path):
+    expected = {"SOMETHING": ["blob"], "SOME_VAR": "blob"}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+SOME_VAR = "blob"
+SOMETHING = ["${SOME_VAR}"]
+""")
+
+    actual = Parser(path).parse_file()
+    print(actual)
+
+    assert expected == actual
+
+
 def test_env_quoted_key(tmp_path, monkeypatch):
     monkeypatch.setenv("SOME_VAR", "blob")
 
