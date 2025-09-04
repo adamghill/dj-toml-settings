@@ -1,0 +1,154 @@
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
+from urllib.parse import ParseResult
+
+import pytest
+
+from dj_toml_settings.value_parsers.dict_parsers import TypeParser
+
+
+def test_bool():
+    parser = TypeParser(data={}, value={"$type": "bool"})
+
+    # Test string conversions
+    assert parser.parse("true") is True
+    assert parser.parse("True") is True
+    assert parser.parse("false") is False
+    assert parser.parse("False") is False
+
+    # Test integer conversions
+    assert parser.parse(1) is True
+    assert parser.parse(0) is False
+
+    # Test already boolean
+    assert parser.parse(True) is True
+    assert parser.parse(False) is False
+
+
+def test_int():
+    parser = TypeParser(data={}, value={"$type": "int"})
+
+    # Test string to int
+    assert parser.parse("42") == 42
+    assert parser.parse("-10") == -10
+
+    # Test float to int (should truncate)
+    assert parser.parse(3.14) == 3
+
+    # Test already int
+    assert parser.parse(100) == 100
+
+
+def test_str():
+    parser = TypeParser(data={}, value={"$type": "str"})
+
+    # Test various types to string
+    assert parser.parse(42) == "42"
+    assert parser.parse(3.14) == "3.14"
+    assert parser.parse(True) == "True"
+    assert parser.parse(None) == "None"
+    assert parser.parse("hello") == "hello"
+
+
+def test_float():
+    parser = TypeParser(data={}, value={"$type": "float"})
+
+    # Test string to float
+    assert parser.parse("3.14") == 3.14
+    assert parser.parse("-1.5") == -1.5
+
+    # Test int to float
+    assert parser.parse(42) == 42.0
+
+    # Test already float
+    assert parser.parse(3.14) == 3.14
+
+
+def test_decimal():
+    parser = TypeParser(data={}, value={"$type": "decimal"})
+
+    # Test string to Decimal
+    assert parser.parse("3.14") == Decimal("3.14")
+    assert parser.parse("-1.5") == Decimal("-1.5")
+
+    # Test int to Decimal
+    assert parser.parse(42) == Decimal(42)
+
+    # Test float to Decimal (note: float imprecision might occur)
+    assert float(parser.parse(3.14)) == 3.14
+
+
+def test_datetime():
+    parser = TypeParser(data={}, value={"$type": "datetime"})
+
+    # Test string to datetime
+    dt = parser.parse("2023-01-01 12:00:00")
+    assert isinstance(dt, datetime)
+    assert dt.year == 2023
+    assert dt.month == 1
+    assert dt.day == 1
+    assert dt.hour == 12
+
+
+def test_date():
+    parser = TypeParser(data={}, value={"$type": "date"})
+
+    # Test string to date
+    date_obj = parser.parse("2023-01-01")
+    assert isinstance(date_obj, date)
+    assert date_obj.year == 2023
+    assert date_obj.month == 1
+    assert date_obj.day == 1
+
+
+def test_time():
+    parser = TypeParser(data={}, value={"$type": "time"})
+
+    # Test string to time
+    time_obj = parser.parse("12:30:45")
+    assert isinstance(time_obj, time)
+    assert time_obj.hour == 12
+    assert time_obj.minute == 30
+    assert time_obj.second == 45
+
+
+def test_timedelta():
+    parser = TypeParser(data={}, value={"$type": "timedelta"})
+
+    # Test numeric values (treated as seconds)
+    assert parser.parse(60) == timedelta(seconds=60)
+    assert parser.parse(90.5) == timedelta(seconds=90.5)
+
+    # Test string formats
+    assert parser.parse("30s") == timedelta(seconds=30)
+    assert parser.parse("2m") == timedelta(minutes=2)
+    assert parser.parse("1.5h") == timedelta(hours=1.5)
+    assert parser.parse("2d") == timedelta(days=2)
+    assert parser.parse("1w") == timedelta(weeks=1)
+
+    assert parser.parse("1w 2d 3h 4m 5s 6ms 7u") == timedelta(
+        weeks=1, days=2, hours=3, minutes=4, seconds=5, milliseconds=6, microseconds=7
+    )
+
+    assert parser.parse("1w2d") == timedelta(weeks=1, days=2)
+
+
+def test_url():
+    parser = TypeParser(data={}, value={"$type": "url"})
+
+    # Test URL parsing
+    result = parser.parse("https://example.com/path?query=1")
+    assert isinstance(result, ParseResult)
+    assert result.scheme == "https"
+    assert result.netloc == "example.com"
+    assert result.path == "/path"
+    assert result.query == "query=1"
+
+
+def test_invalid_type():
+    parser = TypeParser(data={}, value={"$type": "invalid_type"})
+
+    with pytest.raises(ValueError) as exc_info:
+        parser.parse("some value")
+
+    assert "Unsupported type: invalid_type" in str(exc_info.value)

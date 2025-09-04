@@ -2,7 +2,7 @@ from pathlib import Path
 
 from typeguard import typechecked
 
-from dj_toml_settings.toml_parser import parse_file
+from dj_toml_settings.toml_parser import Parser
 
 TOML_SETTINGS_FILES = ["pyproject.toml", "django.toml"]
 
@@ -21,8 +21,9 @@ def get_toml_settings(base_dir: Path, data: dict | None = None, toml_settings_fi
 
     for settings_file_name in toml_settings_files:
         settings_path = base_dir / settings_file_name
+
         if settings_path.exists():
-            file_data = parse_file(settings_path, data=data.copy())
+            file_data = Parser(settings_path, data=data.copy()).parse_file()
             data.update(file_data)
 
     return data

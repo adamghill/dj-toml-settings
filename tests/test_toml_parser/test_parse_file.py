@@ -6,7 +6,7 @@ import pytest
 from dateutil import parser as dateparser
 
 from dj_toml_settings.exceptions import InvalidActionError
-from dj_toml_settings.toml_parser import parse_file
+from dj_toml_settings.toml_parser import Parser
 
 
 def test(tmp_path):
@@ -20,7 +20,35 @@ ALLOWED_HOSTS = [
 ]
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
+
+    assert expected == actual
+
+
+def test_type_bool_true(tmp_path):
+    expected = {"DEBUG": True}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+DEBUG = { $value = "True", $type = "bool" }
+""")
+
+    actual = Parser(path).parse_file()
+
+    assert expected == actual
+
+
+def test_type_float(tmp_path):
+    expected = {"FLOAT": float("1.5")}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+FLOAT = { $value = "1.5", $type = "float" }
+""")
+
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -37,7 +65,7 @@ ALLOWED_HOSTS = [
 """)
     data = {"DEBUG": False}
 
-    actual = parse_file(path, data=data)
+    actual = Parser(path, data=data).parse_file()
 
     assert expected == actual
 
@@ -52,7 +80,7 @@ DEBUG = true
 """)
     data = {"DEBUG": False}
 
-    actual = parse_file(path, data=data)
+    actual = Parser(path, data=data).parse_file()
 
     assert expected == actual
 
@@ -73,7 +101,7 @@ ALLOWED_HOSTS = [
 ]
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -96,7 +124,7 @@ ALLOWED_HOSTS = [
 ]
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -119,7 +147,7 @@ ALLOWED_HOSTS = [
 ]
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -147,7 +175,7 @@ ALLOWED_HOSTS = [
 ]
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -163,7 +191,55 @@ def test_env(tmp_path, monkeypatch):
 SOMETHING = { $env = "SOME_VAR" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
+
+    assert expected == actual
+
+
+def test_env_in_nested_dict(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOME_VAR", "blob")
+
+    expected = {"SOMETHING": {"MORE": "blob"}}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+SOMETHING = { MORE = { $env = "SOME_VAR" } }
+""")
+
+    actual = Parser(path).parse_file()
+
+    assert expected == actual
+
+
+def test_env_in_list(tmp_path, monkeypatch):
+    monkeypatch.setenv("SOME_VAR", "blob")
+
+    expected = {"SOMETHING": ["blob"]}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+SOMETHING = [{ "$env" = "SOME_VAR"}]
+""")
+
+    actual = Parser(path).parse_file()
+
+    assert expected == actual
+
+
+def test_variable_in_list(tmp_path):
+    expected = {"SOMETHING": ["blob"], "SOME_VAR": "blob"}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+SOME_VAR = "blob"
+SOMETHING = ["${SOME_VAR}"]
+""")
+
+    actual = Parser(path).parse_file()
+    print(actual)
 
     assert expected == actual
 
@@ -179,7 +255,7 @@ def test_env_quoted_key(tmp_path, monkeypatch):
 SOMETHING = { "$env" = "SOME_VAR" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -193,7 +269,7 @@ def test_env_missing(tmp_path):
 SOMETHING = { $env = "SOME_VAR" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -207,7 +283,7 @@ def test_env_default(tmp_path):
 SOMETHING = { $env = "SOME_VAR", $default = "default" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -221,7 +297,7 @@ def test_path(tmp_path):
 SOMETHING = { $path = "test-file" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -235,7 +311,7 @@ def test_relative_path(tmp_path):
 SOMETHING = { $path = "./test-file" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -249,7 +325,7 @@ def test_parent_path(tmp_path):
 SOMETHING = { $path = "../test-file" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -263,7 +339,7 @@ def test_parent_path_2(tmp_path):
 SOMETHING = { $path = "./../test-file" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -280,7 +356,7 @@ SOMETHING = [1]
 SOMETHING = { $insert = 2 }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -294,7 +370,7 @@ def test_insert_missing(tmp_path):
 SOMETHING = { $insert = 1 }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -312,7 +388,7 @@ SOMETHING = { $insert = 1 }
 """)
 
     with pytest.raises(InvalidActionError) as e:
-        actual = parse_file(path)
+        actual = Parser(path).parse_file()
 
         assert expected == actual
 
@@ -334,7 +410,7 @@ SOMETHING = [1]
 SOMETHING = { $insert = 2, $index = 0 }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -351,7 +427,7 @@ SOMETHING = [1]
 SOMETHING = { blob = "hello" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -365,7 +441,7 @@ def test_table(tmp_path):
 blob = "hello"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -381,7 +457,7 @@ def test_all_dictionaries(tmp_path):
 DATABASES = { default = { ENGINE = "django.db.backends.postgresql" } }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
     assert expected == actual
 
     # table for DATABASES
@@ -390,7 +466,7 @@ DATABASES = { default = { ENGINE = "django.db.backends.postgresql" } }
 default = { ENGINE = "django.db.backends.postgresql" }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
     assert expected == actual
 
     # table for DATABASES.default
@@ -399,7 +475,7 @@ default = { ENGINE = "django.db.backends.postgresql" }
 ENGINE = "django.db.backends.postgresql"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
     assert expected == actual
 
 
@@ -415,7 +491,7 @@ SOMETHING = "hello"
 SOMETHING2 = "${SOMETHING}"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -432,7 +508,7 @@ def test_variable_callable(tmp_path):
 SOMETHING = "${some_function}"
 """)
 
-    actual = parse_file(path, {"some_function": some_function})
+    actual = Parser(path, data={"some_function": some_function}).parse_file()
 
     assert id(expected["SOMETHING"]) == id(actual["SOMETHING"])
 
@@ -447,7 +523,7 @@ INT = 123
 TEST = "${INT}4"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -462,7 +538,7 @@ INT = 123
 TEST = "a${INT}"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -477,7 +553,7 @@ FLOAT = 123.1
 TEST = "${FLOAT}4"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -492,7 +568,7 @@ FLOAT = 123.1
 TEST = "a${FLOAT}"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -507,7 +583,7 @@ ARRAY = [1, 2, 3]
 TEST = "${ARRAY}"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -522,7 +598,7 @@ HASH = { a = 1 }
 TEST = "${HASH}"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -539,7 +615,7 @@ a = 1
 TEST = "${HASH}"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -559,7 +635,7 @@ DATETIME = 2025-08-30T07:32:00Z
 TEST = "${DATETIME}"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -579,7 +655,7 @@ DATETIME = 2025-08-30T00:32:00-07:00
 TEST = "${DATETIME}"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -593,7 +669,7 @@ def test_none(tmp_path):
 TEST = { $none = 1 }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -611,7 +687,7 @@ TOML_SETTINGS_SPECIAL_PREFIX = "&"
 TEST = { &none = 1 }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -631,7 +707,7 @@ TOML_SETTINGS_SPECIAL_SUFFIX = "*"
 TEST = { none* = 1 }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -651,7 +727,7 @@ TOML_SETTINGS_SPECIAL_SUFFIX = "*"
 TEST = { &none* = 1 }
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -669,7 +745,7 @@ SOMETHING2 = "hello"
 """)
 
     with caplog.at_level(logging.WARNING):
-        actual = parse_file(path)
+        actual = Parser(path).parse_file()
 
         assert expected == actual
 
@@ -693,7 +769,7 @@ SOMETHING2 = "${SOMETHING1}"
 """)
 
     with caplog.at_level(logging.WARNING):
-        actual = parse_file(path)
+        actual = Parser(path).parse_file()
 
         assert expected == actual
 
@@ -714,7 +790,7 @@ BASE_DIR = { $path = "." }
 STATIC_ROOT = "${BASE_DIR}/staticfiles"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -729,7 +805,7 @@ BASE_DIR = { $path = "/something" }
 STATIC_ROOT = "/blob${BASE_DIR}"
 """)
 
-    actual = parse_file(path)
+    actual = Parser(path).parse_file()
 
     assert expected == actual
 
@@ -741,7 +817,7 @@ def test_invalid_toml(tmp_path, caplog):
     expected = "Cannot parse TOML at: "
 
     with caplog.at_level(logging.ERROR):
-        parse_file(path)
+        Parser(path).parse_file()
 
         # Check that an error was logged
         assert len(caplog.records) == 1
@@ -754,7 +830,7 @@ def test_missing_file(caplog):
     expected = "Cannot find file at: missing-file"
 
     with caplog.at_level(logging.WARNING):
-        parse_file(Path("missing-file"))
+        Parser(Path("missing-file")).parse_file()
 
         # Check that an error was logged
         assert len(caplog.records) == 1
