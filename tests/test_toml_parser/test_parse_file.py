@@ -39,6 +39,20 @@ DEBUG = { $value = "True", $type = "bool" }
     assert expected == actual
 
 
+def test_type_float(tmp_path):
+    expected = {"FLOAT": float("1.5")}
+
+    path = tmp_path / "pyproject.toml"
+    path.write_text("""
+[tool.django]
+FLOAT = { $value = "1.5", $type = "float" }
+""")
+
+    actual = Parser(path).parse_file()
+
+    assert expected == actual
+
+
 def test_data(tmp_path):
     expected = {"DEBUG": False, "ALLOWED_HOSTS": ["127.0.0.1"]}
 

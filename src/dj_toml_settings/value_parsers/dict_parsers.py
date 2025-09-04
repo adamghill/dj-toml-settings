@@ -1,10 +1,19 @@
+import json
+import logging
 import os
+import re
+from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
+from dateutil import parser as dateparser
 from typeguard import typechecked
 
 from dj_toml_settings.exceptions import InvalidActionError
+
+logger = logging.getLogger(__name__)
 
 
 class DictParser:
@@ -129,17 +138,91 @@ class TypeParser(DictParser):
     def parse(self, resolved_value: Any) -> Any:
         value_type = self.value[self.key]
 
-        if value_type == "bool":
-            if isinstance(resolved_value, str):
-                if resolved_value == "False":
-                    resolved_value = False
-                elif resolved_value == "True":
-                    resolved_value = True
-            elif isinstance(resolved_value, int):
-                if resolved_value == 0:
-                    resolved_value = False
-                elif resolved_value == 1:
-                    resolved_value = True
-        # TODO: add other types similar to environs
+        if not isinstance(value_type, str):
+            raise ValueError(f"Type must be a string, got {type(value_type).__name__}")
 
-        return resolved_value
+        try:
+            if value_type == "bool":
+                if isinstance(resolved_value, str):
+                    resolved_value = resolved_value.lower() == "true"
+                elif isinstance(resolved_value, int):
+                    resolved_value = bool(resolved_value)
+                return bool(resolved_value)
+            elif value_type == "int":
+                return int(resolved_value)
+            elif value_type == "str":
+                return str(resolved_value)
+            elif value_type == "float":
+                return float(resolved_value)
+            elif value_type == "decimal":
+                return Decimal(str(resolved_value))
+            elif value_type == "datetime":
+                result = dateparser.parse(resolved_value)
+
+                if not result:
+                    raise ValueError(f"Could not parse datetime from: {resolved_value}")
+
+                return result
+            elif value_type == "date":
+                result = dateparser.parse(resolved_value)
+
+                if not result:
+                    raise ValueError(f"Could not parse date from: {resolved_value}")
+
+                return result.date()
+            elif value_type == "time":
+                result = dateparser.parse(resolved_value)
+
+                if not result:
+                    raise ValueError(f"Could not parse time from: {resolved_value}")
+
+                return result.time()
+            elif value_type == "timedelta":
+                return parse_timedelta(resolved_value)
+            elif value_type == "url":
+                return urlparse(str(resolved_value))
+            else:
+                raise ValueError(f"Unsupported type: {value_type}")
+        except (ValueError, TypeError, AttributeError) as e:
+            logger.debug(f"Failed to convert {resolved_value!r} to {value_type}: {e}")
+
+            raise ValueError(f"Failed to convert {resolved_value!r} to {value_type}: {e}") from e
+
+
+def parse_timedelta(value):
+    if isinstance(value, int | float):
+        return timedelta(seconds=value)
+    elif not isinstance(value, str):
+        raise ValueError(f"Unsupported type for timedelta: {type(value).__name__}")
+
+    # Pattern to match both space-separated and combined formats like '7w2d'
+    pattern = r"(?:\s*(\d+\.?\d*)([a-z]+))"
+    matches = re.findall(pattern, value, re.IGNORECASE)
+
+    if not matches and value.strip():
+        raise ValueError(f"Invalid timedelta format: {value}")
+
+    unit_map = {
+        "u": "microseconds",
+        "ms": "milliseconds",
+        "s": "seconds",
+        "m": "minutes",
+        "h": "hours",
+        "d": "days",
+        "w": "weeks",
+    }
+    kwargs = {}
+
+    for num_str, unit in matches:
+        try:
+            num = float(num_str)
+        except ValueError:
+            raise ValueError(f"Invalid number in timedelta: {num_str}")
+
+        if unit not in unit_map:
+            raise ValueError(f"Invalid time unit: {unit}")
+
+        key = unit_map[unit]
+        kwargs[key] = kwargs.get(key, 0) + num
+
+    return timedelta(**kwargs)

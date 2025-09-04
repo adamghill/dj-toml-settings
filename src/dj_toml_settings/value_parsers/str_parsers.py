@@ -10,22 +10,6 @@ from typeguard import typechecked
 logger = logging.getLogger(__name__)
 
 
-@typechecked
-def combine_bookends(original: str, match: re.Match, middle: Any) -> str:
-    """Get the beginning of the original string before the match, and the
-    end of the string after the match and smush the replaced value in between
-    them to generate a new string.
-    """
-
-    start_idx = match.start()
-    start = original[:start_idx]
-
-    end_idx = match.end()
-    ending = original[end_idx:]
-
-    return start + str(middle) + ending
-
-
 class VariableParser:
     data: dict
     value: str
@@ -73,3 +57,19 @@ class VariableParser:
                 logger.warning(f"Missing variable substitution {value}")
 
         return value
+
+
+@typechecked
+def combine_bookends(original: str, match: re.Match, middle: Any) -> str:
+    """Get the beginning of the original string before the match, and the
+    end of the string after the match and smush the replaced value in between
+    them to generate a new string.
+    """
+
+    start_idx = match.start()
+    start = original[:start_idx]
+
+    end_idx = match.end()
+    ending = original[end_idx:]
+
+    return start + str(middle) + ending

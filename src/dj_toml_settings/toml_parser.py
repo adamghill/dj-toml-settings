@@ -1,6 +1,5 @@
 import logging
 import os
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -20,22 +19,6 @@ from dj_toml_settings.value_parsers.dict_parsers import (
 from dj_toml_settings.value_parsers.str_parsers import VariableParser
 
 logger = logging.getLogger(__name__)
-
-
-@typechecked
-def combine_bookends(original: str, match: re.Match, middle: Any) -> str:
-    """Get the beginning of the original string before the match, and the
-    end of the string after the match and smush the replaced value in between
-    them to generate a new string.
-    """
-
-    start_idx = match.start()
-    start = original[:start_idx]
-
-    end_idx = match.end()
-    ending = original[end_idx:]
-
-    return start + str(middle) + ending
 
 
 class Parser:
@@ -118,6 +101,7 @@ class Parser:
         """
 
         if isinstance(value, list):
+            # Process each item in the list
             processed_list = []
 
             for item in value:
@@ -145,7 +129,7 @@ class Parser:
             none_parser = NoneParser(data=self.data, value=value)
             insert_parser = InsertParser(data=self.data, value=value, data_key=key)
 
-            # Check for a match for all specials (except $type)
+            # Check for a match for all operators (except $type)
             for parser in [env_parser, path_parser, value_parser, insert_parser, none_parser]:
                 if parser.match():
                     value = parser.parse()
