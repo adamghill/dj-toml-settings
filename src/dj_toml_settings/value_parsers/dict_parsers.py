@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import re
@@ -18,9 +17,10 @@ logger = logging.getLogger(__name__)
 
 class DictParser:
     data: dict
-    value: str
+    value: dict
+    key: str
 
-    def __init__(self, data: dict, value: str):
+    def __init__(self, data: dict, value: dict):
         self.data = data
         self.value = value
 
@@ -48,7 +48,7 @@ class DictParser:
 
         return f"{prefix}{key}{suffix}"
 
-    def parse(self):
+    def parse(self, *args, **kwargs):
         raise NotImplementedError("parse() not implemented")
 
 
@@ -68,7 +68,7 @@ class EnvParser(DictParser):
 class PathParser(DictParser):
     key: str = "path"
 
-    def __init__(self, data: dict, value: str, path: Path):
+    def __init__(self, data: dict, value: dict, path: Path):
         super().__init__(data, value)
         self.path = path
 
@@ -89,7 +89,7 @@ class PathParser(DictParser):
 
         current_path = Path(self.path).parent if self.path.is_file() else self.path
 
-        return (current_path / self.file_name).resolve()
+        return Path((current_path / self.file_name).resolve())
 
 
 class ValueParser(DictParser):
@@ -102,7 +102,7 @@ class ValueParser(DictParser):
 class InsertParser(DictParser):
     key = "insert"
 
-    def __init__(self, data: dict, value: str, data_key: str):
+    def __init__(self, data: dict, value: dict, data_key: str):
         super().__init__(data, value)
         self.data_key = data_key
 
@@ -126,7 +126,7 @@ class NoneParser(DictParser):
     key = "none"
 
     def match(self) -> bool:
-        return super().match() and self.value.get(self.key)
+        return super().match() and self.value.get(self.key) is not None
 
     def parse(self) -> Any:
         return None
@@ -216,8 +216,8 @@ def parse_timedelta(value):
     for num_str, unit in matches:
         try:
             num = float(num_str)
-        except ValueError:
-            raise ValueError(f"Invalid number in timedelta: {num_str}")
+        except ValueError as e:
+            raise ValueError(f"Invalid number in timedelta: {num_str}") from e
 
         if unit not in unit_map:
             raise ValueError(f"Invalid time unit: {unit}")

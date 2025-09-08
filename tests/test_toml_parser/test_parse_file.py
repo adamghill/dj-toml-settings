@@ -239,7 +239,6 @@ SOMETHING = ["${SOME_VAR}"]
 """)
 
     actual = Parser(path).parse_file()
-    print(actual)
 
     assert expected == actual
 

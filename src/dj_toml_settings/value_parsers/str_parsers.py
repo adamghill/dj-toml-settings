@@ -19,7 +19,7 @@ class VariableParser:
         self.value = value
 
     def parse(self) -> Any:
-        value = self.value
+        value: Any = self.value
 
         for match in re.finditer(r"\$\{\w+\}", value):
             data_key = value[match.start() : match.end()][2:-1]
