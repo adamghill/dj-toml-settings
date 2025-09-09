@@ -86,15 +86,6 @@ ALLOWED_HOSTS = ["example.com"]
 
 By default, special operations are denoted by an [`inline table`](https://toml.io/en/v1.0.0#inline-table), (aka a `dictionary`) with a key that starts with a `$`, e.g. `{ "$value" = "1" }`.
 
-The prefix and suffix that denotes a special operation can be configured with `TOML_SETTINGS_SPECIAL_PREFIX` or `TOML_SETTINGS_SPECIAL_SUFFIX` in `[tool.django]`.
-
-```toml
-[tool.django]
-TOML_SETTINGS_SPECIAL_PREFIX = "&"
-TOML_SETTINGS_SPECIAL_SUFFIX = "*"
-BASE_DIR = { "&path*" = "." }
-```
-
 ### Path
 
 Converts a string to a `Path` object by using a `$path` key. Handles relative paths based on the location of the parsed TOML file.

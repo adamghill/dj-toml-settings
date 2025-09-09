@@ -27,26 +27,16 @@ class DictParser:
         if not hasattr(self, "key"):
             raise NotImplementedError("Missing key attribute")
 
-        self.key = self.add_prefix_and_suffix_to_key(self.key)
+        self.key = self.add_prefix_to_key(self.key)
 
     def match(self) -> bool:
         return self.key in self.value
 
     @typechecked
-    def add_prefix_and_suffix_to_key(self, key: str) -> str:
-        """Gets the key for the special operator. Defaults to "$" as the prefix, and "" as the suffix.
+    def add_prefix_to_key(self, key: str) -> str:
+        """Gets the key for the special operator."""
 
-        To change in the included TOML settings, set:
-        ```
-        TOML_SETTINGS_SPECIAL_PREFIX = ""
-        TOML_SETTINGS_SPECIAL_SUFFIX = ""
-        ```
-        """
-
-        prefix = self.data.get("TOML_SETTINGS_SPECIAL_PREFIX", "$")
-        suffix = self.data.get("TOML_SETTINGS_SPECIAL_SUFFIX", "")
-
-        return f"{prefix}{key}{suffix}"
+        return f"${key}"
 
     def parse(self, *args, **kwargs):
         raise NotImplementedError("parse() not implemented")
@@ -56,7 +46,7 @@ class EnvParser(DictParser):
     key: str = "env"
 
     def parse(self) -> Any:
-        default_special_key = self.add_prefix_and_suffix_to_key("default")
+        default_special_key = self.add_prefix_to_key("default")
         default_value = self.value.get(default_special_key)
 
         env_value = self.value[self.key]
@@ -114,7 +104,7 @@ class InsertParser(DictParser):
             raise InvalidActionError(f"`insert` cannot be used for value of type: {type(self.data[self.data_key])}")
 
         # Insert the data
-        index_key = self.add_prefix_and_suffix_to_key("index")
+        index_key = self.add_prefix_to_key("index")
         index = self.value.get(index_key, len(insert_data))
 
         insert_data.insert(index, self.value[self.key])
