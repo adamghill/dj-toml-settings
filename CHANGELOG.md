@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-dev
+
+- Move from `toml` to `tomli` for TOML parsing to allow using `tomllib` in standard library for Python > 3.11.
+
+### Breaking changes
+
+- Remove custom prefix or suffixes for special operators. Everything should start with "$" to reduce code and unnecessary complications.
+
 ## 0.4.0
 
 - Add `$value` operator.
