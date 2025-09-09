@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0-dev
+## 0.5.0
 
 - Move from `toml` to `tomli` for TOML parsing to allow using `tomllib` in standard library for Python > 3.11.
 
