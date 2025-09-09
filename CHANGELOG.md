@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0-dev
+
+- Support for "path" casting for `$type`.
+
 ## 0.5.0
 
 - Move from `toml` to `tomli` for TOML parsing to allow using `tomllib` in standard library for Python > 3.11.

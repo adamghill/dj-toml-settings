@@ -23,7 +23,7 @@ ALLOWED_HOSTS = [
   "127.0.0.1",
 ]
 
-# Values can be casted to a bool, int, str, float, decimal, datetime, date, time, timedelta, url
+# Values can be casted to a bool, int, str, float, decimal, datetime, date, time, timedelta, url, Path
 SITE_ID = { "$value" = "1", "$type" = "int" }
 
 # This is an implicit dictionary and equivalent to `COLTRANE = { TITLE = "Example blog" }`
@@ -143,7 +143,7 @@ SITE_ID = { "$value" = 1 }
 
 ### Type
 
-Casts the value to a particular type. Supported types: `bool`, `int`, `str`, `float`, `decimal`, `datetime`, `date`, `time`, `timedelta`, `url`. Especially helpful for values that come from environment variables which are usually read in as strings.
+Casts the value to a particular type. Supported types: `bool`, `int`, `str`, `float`, `decimal`, `datetime`, `date`, `time`, `timedelta`, `url`, and `Path`. Especially helpful for values that come from environment variables which are usually read in as strings.
 
 `$type` can be used as an additional operator with any other operator.
 
