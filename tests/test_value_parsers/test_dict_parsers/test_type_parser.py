@@ -1,5 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from os import getcwd
+from pathlib import Path
 from urllib.parse import ParseResult
 
 import pytest
@@ -83,6 +85,21 @@ def test_decimal():
     assert float(parser.parse(3.14)) == 3.14
 
 
+def test_path():
+    expected = getcwd()
+
+    parser = TypeParser(data={}, value={"$type": "path"})
+    actual = parser.parse(".")
+
+    assert isinstance(actual, Path)
+    assert expected == str(actual)
+
+    with pytest.raises(ValueError) as e:
+        parser.parse(1)
+
+    assert "ValueError: Failed to convert 1 to path: expected str, bytes or os.PathLike object, not int" in e.exconly()
+
+
 def test_datetime():
     parser = TypeParser(data={}, value={"$type": "datetime"})
 
@@ -106,23 +123,23 @@ def test_datetime_invalid():
 def test_date():
     parser = TypeParser(data={}, value={"$type": "date"})
 
-    # Test string to date
-    date_obj = parser.parse("2023-01-01")
-    assert isinstance(date_obj, date)
-    assert date_obj.year == 2023
-    assert date_obj.month == 1
-    assert date_obj.day == 1
+    actual = parser.parse("2023-01-01")
+
+    assert isinstance(actual, date)
+    assert actual.year == 2023
+    assert actual.month == 1
+    assert actual.day == 1
 
 
 def test_time():
     parser = TypeParser(data={}, value={"$type": "time"})
 
-    # Test string to time
-    time_obj = parser.parse("12:30:45")
-    assert isinstance(time_obj, time)
-    assert time_obj.hour == 12
-    assert time_obj.minute == 30
-    assert time_obj.second == 45
+    actual = parser.parse("12:30:45")
+
+    assert isinstance(actual, time)
+    assert actual.hour == 12
+    assert actual.minute == 30
+    assert actual.second == 45
 
 
 def test_timedelta():
@@ -164,13 +181,13 @@ def test_timedelta():
 def test_url():
     parser = TypeParser(data={}, value={"$type": "url"})
 
-    # Test URL parsing
-    result = parser.parse("https://example.com/path?query=1")
-    assert isinstance(result, ParseResult)
-    assert result.scheme == "https"
-    assert result.netloc == "example.com"
-    assert result.path == "/path"
-    assert result.query == "query=1"
+    actual = parser.parse("https://example.com/path?query=1")
+
+    assert isinstance(actual, ParseResult)
+    assert actual.scheme == "https"
+    assert actual.netloc == "example.com"
+    assert actual.path == "/path"
+    assert actual.query == "query=1"
 
 
 def test_invalid_type():
