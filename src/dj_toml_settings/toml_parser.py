@@ -1,12 +1,17 @@
 import logging
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import toml
 from dateutil import parser as dateparser
 from typeguard import typechecked
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 from dj_toml_settings.value_parsers.dict_parsers import (
     EnvParser,
@@ -76,10 +81,11 @@ class Parser:
         data = {}
 
         try:
-            data = toml.load(self.path)
+            with open(self.path, "rb") as f:
+                data = tomllib.load(f)
         except FileNotFoundError:
             logger.warning(f"Cannot find file at: {self.path}")
-        except toml.TomlDecodeError:
+        except tomllib.TOMLDecodeError:
             logger.error(f"Cannot parse TOML at: {self.path}")
 
         return data.get("tool", {}).get("django", {}) or {}

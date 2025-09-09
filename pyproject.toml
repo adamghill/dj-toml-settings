@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "python-dateutil>=2.9.0.post0",
-    "toml>=0.10.2",
+    "tomli>=1.1.0; python_version < '3.11'",
     "typeguard>=2",
 ]
 
