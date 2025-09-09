@@ -197,14 +197,14 @@ SOMETHING = { "$env" = "SOME_VAR" }
 
 
 def test_env_in_nested_dict(tmp_path, monkeypatch):
-    monkeypatch.setenv("SOME_VAR", "blob")
+    monkeypatch.setenv("DATABASE_ENGINE", "django.db.backends.sqlite3")
 
-    expected = {"SOMETHING": {"MORE": "blob"}}
+    expected = {"DATABASES": {"default": {"ENGINE": "django.db.backends.sqlite3"}}}
 
     path = tmp_path / "pyproject.toml"
     path.write_text("""
-[tool.django]
-SOMETHING = { MORE = { "$env" = "SOME_VAR" } }
+[tool.django.DATABASES]
+default = { ENGINE = { "$env" = "DATABASE_ENGINE", "$default" = "django.db.backends.postgresql" } }
 """)
 
     actual = Parser(path).parse_file()
