@@ -163,6 +163,8 @@ class TypeParser(DictParser):
                 return parse_timedelta(resolved_value)
             elif value_type == "url":
                 return urlparse(str(resolved_value))
+            elif value_type == "path":
+                return Path(resolved_value).resolve()
             else:
                 raise ValueError(f"Unsupported type: {value_type}")
         except (ValueError, TypeError, AttributeError) as e:
