@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+
+- Add `$value` operator.
+- Add `$type` operator with support for `bool`, `int`, `str`, `float`, `decimal`, `datetime`, `date`, `time`, `timedelta`, `url`.
+
 ## 0.3.1
 
 - Fix `$index`.
