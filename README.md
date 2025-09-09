@@ -23,6 +23,9 @@ ALLOWED_HOSTS = [
   "127.0.0.1",
 ]
 
+# Values can be casted to a bool, int, str, float, decimal, datetime, date, time, timedelta, url
+SITE_ID = { "$value" = "1", "$type" = "int" }
+
 # This is an implicit dictionary and equivalent to `COLTRANE = { TITLE = "Example blog" }`
 [tool.django.COLTRANE]
 TITLE = "Example blog"
@@ -81,7 +84,7 @@ ALLOWED_HOSTS = ["example.com"]
 
 ## Special operations 😎
 
-By default, special operations are denoted by an [`inline table`](https://toml.io/en/v1.0.0#inline-table), (aka a `dictionary`) with a key that starts with a `$`.
+By default, special operations are denoted by an [`inline table`](https://toml.io/en/v1.0.0#inline-table), (aka a `dictionary`) with a key that starts with a `$`, e.g. `{ "$value" = "1" }`.
 
 The prefix and suffix that denotes a special operation can be configured with `TOML_SETTINGS_SPECIAL_PREFIX` or `TOML_SETTINGS_SPECIAL_SUFFIX` in `[tool.django]`.
 
@@ -136,6 +139,31 @@ Specify `None` for a variable with a `$none` key. The value must be truthy, i.e.
 ```toml
 [tool.django]
 EMAIL_HOST_PASSWORD = { "$none" = 1 }
+```
+
+### Value
+
+Specifies a value for a variable.
+
+```toml
+[tool.django]
+SITE_ID = { "$value" = 1 }
+```
+
+### Type
+
+Casts the value to a particular type. Supported types: `bool`, `int`, `str`, `float`, `decimal`, `datetime`, `date`, `time`, `timedelta`, `url`. Especially helpful for values that come from environment variables which are usually read in as strings.
+
+`$type` can be used as an additional operator with any other operator.
+
+```toml
+[tool.django]
+SITE_ID = { "$env" = "SITE_ID", $type = "int" }
+```
+
+```toml
+[tool.django]
+SITE_ID = { "$value" = "1", $type = "int" }
 ```
 
 ## Example Integrations 💚
