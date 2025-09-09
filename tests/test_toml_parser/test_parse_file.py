@@ -31,7 +31,7 @@ def test_type_bool_true(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-DEBUG = { $value = "True", $type = "bool" }
+DEBUG = { "$value" = "True", "$type" = "bool" }
 """)
 
     actual = Parser(path).parse_file()
@@ -45,7 +45,7 @@ def test_type_float(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-FLOAT = { $value = "1.5", $type = "float" }
+FLOAT = { "$value" = "1.5", "$type" = "float" }
 """)
 
     actual = Parser(path).parse_file()
@@ -188,7 +188,7 @@ def test_env(tmp_path, monkeypatch):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { $env = "SOME_VAR" }
+SOMETHING = { "$env" = "SOME_VAR" }
 """)
 
     actual = Parser(path).parse_file()
@@ -204,7 +204,7 @@ def test_env_in_nested_dict(tmp_path, monkeypatch):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { MORE = { $env = "SOME_VAR" } }
+SOMETHING = { MORE = { "$env" = "SOME_VAR" } }
 """)
 
     actual = Parser(path).parse_file()
@@ -265,7 +265,7 @@ def test_env_missing(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { $env = "SOME_VAR" }
+SOMETHING = { "$env" = "SOME_VAR" }
 """)
 
     actual = Parser(path).parse_file()
@@ -279,7 +279,7 @@ def test_env_default(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { $env = "SOME_VAR", $default = "default" }
+SOMETHING = { "$env" = "SOME_VAR", "$default" = "default" }
 """)
 
     actual = Parser(path).parse_file()
@@ -293,7 +293,7 @@ def test_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { $path = "test-file" }
+SOMETHING = { "$path" = "test-file" }
 """)
 
     actual = Parser(path).parse_file()
@@ -307,7 +307,7 @@ def test_relative_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { $path = "./test-file" }
+SOMETHING = { "$path" = "./test-file" }
 """)
 
     actual = Parser(path).parse_file()
@@ -321,7 +321,7 @@ def test_parent_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { $path = "../test-file" }
+SOMETHING = { "$path" = "../test-file" }
 """)
 
     actual = Parser(path).parse_file()
@@ -335,7 +335,7 @@ def test_parent_path_2(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { $path = "./../test-file" }
+SOMETHING = { "$path" = "./../test-file" }
 """)
 
     actual = Parser(path).parse_file()
@@ -352,7 +352,7 @@ def test_insert(tmp_path):
 SOMETHING = [1]
 
 [tool.django.apps.something]
-SOMETHING = { $insert = 2 }
+SOMETHING = { "$insert" = 2 }
 """)
 
     actual = Parser(path).parse_file()
@@ -366,7 +366,7 @@ def test_insert_missing(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-SOMETHING = { $insert = 1 }
+SOMETHING = { "$insert" = 1 }
 """)
 
     actual = Parser(path).parse_file()
@@ -383,7 +383,7 @@ def test_insert_invalid(tmp_path):
 SOMETHING = "hello"
 
 [tool.django.apps.something]
-SOMETHING = { $insert = 1 }
+SOMETHING = { "$insert" = 1 }
 """)
 
     with pytest.raises(InvalidActionError) as e:
@@ -406,7 +406,7 @@ def test_insert_index(tmp_path):
 SOMETHING = [1]
 
 [tool.django.apps.something]
-SOMETHING = { $insert = 2, $index = 0 }
+SOMETHING = { "$insert" = 2, "$index" = 0 }
 """)
 
     actual = Parser(path).parse_file()
@@ -665,65 +665,7 @@ def test_none(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-TEST = { $none = 1 }
-""")
-
-    actual = Parser(path).parse_file()
-
-    assert expected == actual
-
-
-def test_special_prefix(tmp_path):
-    expected = {
-        "TOML_SETTINGS_SPECIAL_PREFIX": "&",
-        "TEST": None,
-    }
-
-    path = tmp_path / "pyproject.toml"
-    path.write_text("""
-[tool.django]
-TOML_SETTINGS_SPECIAL_PREFIX = "&"
-TEST = { &none = 1 }
-""")
-
-    actual = Parser(path).parse_file()
-
-    assert expected == actual
-
-
-def test_special_suffix(tmp_path):
-    expected = {
-        "TOML_SETTINGS_SPECIAL_PREFIX": "",
-        "TOML_SETTINGS_SPECIAL_SUFFIX": "*",
-        "TEST": None,
-    }
-
-    path = tmp_path / "pyproject.toml"
-    path.write_text("""
-[tool.django]
-TOML_SETTINGS_SPECIAL_PREFIX = ""
-TOML_SETTINGS_SPECIAL_SUFFIX = "*"
-TEST = { none* = 1 }
-""")
-
-    actual = Parser(path).parse_file()
-
-    assert expected == actual
-
-
-def test_special_prefix_and_suffix(tmp_path):
-    expected = {
-        "TOML_SETTINGS_SPECIAL_PREFIX": "&",
-        "TOML_SETTINGS_SPECIAL_SUFFIX": "*",
-        "TEST": None,
-    }
-
-    path = tmp_path / "pyproject.toml"
-    path.write_text("""
-[tool.django]
-TOML_SETTINGS_SPECIAL_PREFIX = "&"
-TOML_SETTINGS_SPECIAL_SUFFIX = "*"
-TEST = { &none* = 1 }
+TEST = { "$none" = 1 }
 """)
 
     actual = Parser(path).parse_file()
@@ -785,7 +727,7 @@ def test_variable_start_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-BASE_DIR = { $path = "." }
+BASE_DIR = { "$path" = "." }
 STATIC_ROOT = "${BASE_DIR}/staticfiles"
 """)
 
@@ -800,7 +742,7 @@ def test_variable_end_path(tmp_path):
     path = tmp_path / "pyproject.toml"
     path.write_text("""
 [tool.django]
-BASE_DIR = { $path = "/something" }
+BASE_DIR = { "$path" = "/something" }
 STATIC_ROOT = "/blob${BASE_DIR}"
 """)
 
