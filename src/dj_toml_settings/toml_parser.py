@@ -119,8 +119,7 @@ class Parser:
                 else:
                     processed_dict[k] = v
 
-            if processed_dict:
-                value = processed_dict
+            value = processed_dict
 
             type_parser = TypeParser(data=self.data, value=value)
             env_parser = EnvParser(data=self.data, value=value)

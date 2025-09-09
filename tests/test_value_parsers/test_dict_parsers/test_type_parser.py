@@ -24,6 +24,11 @@ def test_bool():
     assert parser.parse(True) is True
     assert parser.parse(False) is False
 
+    with pytest.raises(ValueError) as e:
+        assert parser.parse(1.1)
+
+    assert "ValueError: Failed to convert 1.1 to bool: Type must be a string or int, got float" in e.exconly()
+
 
 def test_int():
     parser = TypeParser(data={}, value={"$type": "int"})
@@ -81,13 +86,21 @@ def test_decimal():
 def test_datetime():
     parser = TypeParser(data={}, value={"$type": "datetime"})
 
-    # Test string to datetime
-    dt = parser.parse("2023-01-01 12:00:00")
-    assert isinstance(dt, datetime)
-    assert dt.year == 2023
-    assert dt.month == 1
-    assert dt.day == 1
-    assert dt.hour == 12
+    actual = parser.parse("2023-01-01 12:00:00")
+    assert isinstance(actual, datetime)
+    assert actual.year == 2023
+    assert actual.month == 1
+    assert actual.day == 1
+    assert actual.hour == 12
+
+
+def test_datetime_invalid():
+    parser = TypeParser(data={}, value={"$type": "datetime"})
+
+    with pytest.raises(ValueError) as e:
+        parser.parse("abcd")
+
+    assert "Failed to convert 'abcd' to datetime" in e.exconly()
 
 
 def test_date():
@@ -132,6 +145,21 @@ def test_timedelta():
 
     assert parser.parse("1w2d") == timedelta(weeks=1, days=2)
 
+    with pytest.raises(ValueError) as e:
+        parser.parse({})
+
+    assert "ValueError: Failed to convert {} to timedelta: Unsupported type for timedelta: dict" in e.exconly()
+
+    with pytest.raises(ValueError) as e:
+        parser.parse("abcd")
+
+    assert "ValueError: Failed to convert 'abcd' to timedelta: Invalid timedelta format: abcd" in e.exconly()
+
+    with pytest.raises(ValueError) as e:
+        parser.parse("4z")
+
+    assert "alueError: Failed to convert '4z' to timedelta: Invalid timedelta format: 4z" in e.exconly()
+
 
 def test_url():
     parser = TypeParser(data={}, value={"$type": "url"})
@@ -148,7 +176,16 @@ def test_url():
 def test_invalid_type():
     parser = TypeParser(data={}, value={"$type": "invalid_type"})
 
-    with pytest.raises(ValueError) as exc_info:
+    with pytest.raises(ValueError) as e:
         parser.parse("some value")
 
-    assert "Unsupported type: invalid_type" in str(exc_info.value)
+    assert "Unsupported type: invalid_type" in e.exconly()
+
+
+def test_invalid_type_type():
+    parser = TypeParser(data={}, value={"$type": 1})
+
+    with pytest.raises(ValueError) as e:
+        parser.parse("some value")
+
+    assert "Type must be a string, got int" in e.exconly()

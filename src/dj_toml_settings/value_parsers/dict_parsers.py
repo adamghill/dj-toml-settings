@@ -24,8 +24,8 @@ class DictParser:
         self.data = data
         self.value = value
 
-        if not self.key:
-            raise NotImplementedError("Missing key")
+        if not hasattr(self, "key"):
+            raise NotImplementedError("Missing key attribute")
 
         self.key = self.add_prefix_and_suffix_to_key(self.key)
 
@@ -147,6 +147,9 @@ class TypeParser(DictParser):
                     resolved_value = resolved_value.lower() == "true"
                 elif isinstance(resolved_value, int):
                     resolved_value = bool(resolved_value)
+                else:
+                    raise ValueError(f"Type must be a string or int, got {type(resolved_value).__name__}")
+
                 return bool(resolved_value)
             elif value_type == "int":
                 return int(resolved_value)
@@ -157,24 +160,13 @@ class TypeParser(DictParser):
             elif value_type == "decimal":
                 return Decimal(str(resolved_value))
             elif value_type == "datetime":
-                result = dateparser.parse(resolved_value)
-
-                if not result:
-                    raise ValueError(f"Could not parse datetime from: {resolved_value}")
-
-                return result
+                return dateparser.parse(resolved_value)
             elif value_type == "date":
                 result = dateparser.parse(resolved_value)
-
-                if not result:
-                    raise ValueError(f"Could not parse date from: {resolved_value}")
 
                 return result.date()
             elif value_type == "time":
                 result = dateparser.parse(resolved_value)
-
-                if not result:
-                    raise ValueError(f"Could not parse time from: {resolved_value}")
 
                 return result.time()
             elif value_type == "timedelta":
@@ -196,7 +188,7 @@ def parse_timedelta(value):
         raise ValueError(f"Unsupported type for timedelta: {type(value).__name__}")
 
     # Pattern to match both space-separated and combined formats like '7w2d'
-    pattern = r"(?:\s*(\d+\.?\d*)([a-z]+))"
+    pattern = r"(?:\s*(\d+\.?\d*)([u|ms|s|m|h|d|w]+))"
     matches = re.findall(pattern, value, re.IGNORECASE)
 
     if not matches and value.strip():
