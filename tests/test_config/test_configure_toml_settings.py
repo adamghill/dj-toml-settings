@@ -1,3 +1,5 @@
+from types import ModuleType
+
 from dj_toml_settings.config import configure_toml_settings
 
 
@@ -88,3 +90,23 @@ ALLOWED_HOSTS = ["127.0.0.3"]
     configure_toml_settings(base_dir=tmp_path, data=actual)
 
     assert expected == actual
+
+
+def test_configure_toml_settings_without_data_parameter(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "dj_toml_settings.config.get_toml_settings",
+        lambda *_: {
+            "DEBUG": True,
+        },
+    )
+
+    settings_module = ModuleType("test.settings")
+
+    monkeypatch.setenv("DJANGO_SETTINGS_MODULE", "test.settings")
+    monkeypatch.setattr(
+        "importlib.import_module",
+        lambda *_: settings_module,
+    )
+    configure_toml_settings(base_dir=tmp_path)
+
+    assert settings_module.DEBUG is True
