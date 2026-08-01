@@ -1,7 +1,9 @@
 import importlib
 import logging
 import os
+from importlib import resources
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 from typeguard import typechecked
@@ -14,6 +16,30 @@ TOML_SETTINGS_FILES = [
     "pyproject.toml",
     "django.toml",
 ]
+
+
+def _find_toml_file(module: ModuleType) -> Path:
+    """Look for either a toml file alongside the settings module, or pyproject.toml"""
+
+    # Get the name of the module without the package
+    module_name = module.__name__.rsplit(".", maxsplit=1)[0]
+
+    # Try finding the resource as either <module_name>.toml, or django.toml
+    for filename in [f"{module_name}.toml", "django.toml"]:
+        if resources.is_resource(module, filename):
+            p = resources.path(module, filename)
+            if isinstance(p, Path):
+                return p
+
+    # Try finding pyproject.toml or django_settings.toml in parent directories
+    cwd = Path.cwd()
+    while cwd != cwd.parent:
+        for filename in ["pyproject.toml", "django.toml"]:
+            p = cwd / filename
+            if p.exists():
+                return p
+
+    raise RuntimeError("Could not find any pyproject.toml or django.toml file")
 
 
 @typechecked
